@@ -45,7 +45,8 @@ final class AttachmentStore {
     func download(_ attachment: Attachment) async throws -> URL {
         guard !attachment.url.isEmpty else { throw WardError.network("This attachment has no download address.") }
         var urlString = attachment.url
-        if urlString.hasPrefix("aesgcm://") { urlString = "https://" + urlString.dropFirst("aesgcm://".count) }
+        let aesgcm = FileCrypto.parse(attachment.url)
+        if let aesgcm { urlString = aesgcm.httpsURL }
         guard let url = URL(string: urlString) else { throw WardError.network("Invalid attachment address.") }
         let destination = cachedFile(for: attachment)
         if FileManager.default.fileExists(atPath: destination.path) { return destination }
@@ -55,7 +56,17 @@ final class AttachmentStore {
         guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
             throw WardError.network("The file could not be downloaded.")
         }
-        try data.write(to: destination, options: .atomic)
+        let plaintext: Data
+        if let aesgcm {
+            do {
+                plaintext = try FileCrypto.decrypt(data, key: aesgcm.key, iv: aesgcm.iv)
+            } catch {
+                throw WardError.encryption("This encrypted file could not be decrypted.")
+            }
+        } else {
+            plaintext = data
+        }
+        try plaintext.write(to: destination, options: .atomic)
         return destination
     }
 

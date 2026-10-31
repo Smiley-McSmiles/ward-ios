@@ -2,6 +2,11 @@ import Foundation
 
 // MARK: - Configuration
 
+struct XMPPRegistrationRequest {
+    var username: String
+    var password: String
+}
+
 struct XMPPConfiguration {
     var jid: String
     var password: String
@@ -12,6 +17,7 @@ struct XMPPConfiguration {
     var allowPlain: Bool = true
     var allowInvalidCertificates: Bool = true
     var keepalive: TimeInterval = 60
+    var registration: XMPPRegistrationRequest? = nil
 
     var domain: String { JID.domain(jid) }
     var localpart: String { JID.local(jid) }
@@ -38,6 +44,7 @@ final class XMPPConnection {
     var onError: ((String) -> Void)?
     var onRawIn: ((String) -> Void)?
     var onRawOut: ((String) -> Void)?
+    var onRegistered: ((Result<Void, Error>) -> Void)?
 
     private var transport: TCPTransport?
     private var splitter = XMLStreamSplitter()
@@ -55,6 +62,7 @@ final class XMPPConnection {
     private var lastReceived = Date()
     private var readyFired = false
     private var closedByUser = false
+    private var registrationSent = false
     private var currentStep = "Connecting…"
 
     init(configuration: XMPPConfiguration) {
@@ -245,6 +253,21 @@ final class XMPPConnection {
             fail("This server does not offer STARTTLS. Ward will not send your password over an unencrypted connection.")
             return
         }
+        if let registration = config.registration, !registrationSent, !authenticated {
+            let registerFeature = node.child("register", xmlns: "http://jabber.org/features/iq-register")
+                ?? node.child("register", xmlns: "jabber:iq:register")
+            guard registerFeature != nil else {
+                fail("This server does not support in-band account creation. Create the account on the server's website and sign in.")
+                return
+            }
+            registrationSent = true
+            currentStep = "Creating account…"
+            phase = .authenticating
+            emitState()
+            let xml = "<iq type='set' id='ward-register'><query xmlns='jabber:iq:register'><username>\(XML.escape(registration.username))</username><password>\(XML.escape(registration.password))</password></query></iq>"
+            sendRaw(xml)
+            return
+        }
         if !mechanisms.isEmpty && !authenticated {
             currentStep = "Signing in…"
             emitState()
@@ -297,6 +320,22 @@ final class XMPPConnection {
 
     private func handleIQ(_ node: XMLNode) {
         let id = node.attr("id", "")
+        if id == "ward-register" {
+            if node.attr("type") == "result" {
+                onRegistered?(.success(()))
+                closedByUser = true
+                transport?.cancel()
+                transport = nil
+                phase = .closed
+            } else {
+                let condition = node.child("error")?.children.first?.name ?? "registration-failed"
+                let text = node.child("error")?.child("text")?.trimmedText
+                let message = text?.isEmpty == false ? text! : "The server refused to create the account (\(condition.replacingOccurrences(of: "-", with: " ")))."
+                onRegistered?(.failure(WardError.authentication(message)))
+                fail(message)
+            }
+            return
+        }
         if id == "ward-bind", let bind = node.child("bind") {
             if let jid = bind.child("jid")?.trimmedText, !jid.isEmpty { boundJID = jid }
             if sessionRequired {

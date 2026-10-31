@@ -19,6 +19,10 @@ struct ChatView: View {
     @State private var showPhotoPicker = false
     @State private var showFilePicker = false
     @State private var showCamera = false
+    @State private var showSchedule = false
+    @State private var showGIF = false
+    @State private var showContactShare = false
+    @StateObject private var locationSharer = LocationSharer()
     @State private var photos: [PhotosPickerItem] = []
     @State private var pendingDelete: Message? = nil
     @State private var forwardMessage: Message? = nil
@@ -62,7 +66,13 @@ struct ChatView: View {
                                            onReact: { app.react(message, emoji: $0) },
                                            onEdit: { startEdit(message) },
                                            onForward: { forwardMessage = message },
-                                           onDelete: { pendingDelete = message },
+                                           onDelete: {
+                                               if message.scheduledAt != nil {
+                                                   Task { await app.cancelScheduled(message) }
+                                               } else {
+                                                   pendingDelete = message
+                                               }
+                                           },
                                            onDetails: { showDetails = true })
                                     .id(message.id)
                                     .transition(.asymmetric(insertion: .move(edge: .bottom).combined(with: .opacity),
@@ -172,7 +182,8 @@ struct ChatView: View {
                              onSend: send, onAttach: { showAttach = true },
                              onStopTyping: { app.typing(false) },
                              onRecordingError: { recordingError = true },
-                             onSendVoice: { url, duration in app.sendVoice(url, duration: duration) })
+                             onSendVoice: { url, duration in app.sendVoice(url, duration: duration) },
+                             onSchedule: { showSchedule = true })
                     .background(.ultraThinMaterial)
             }
         }
@@ -195,6 +206,23 @@ struct ChatView: View {
         }
         .sheet(item: $forwardMessage) { message in
             ForwardSheet(message: message)
+        }
+        .sheet(isPresented: $showGIF) {
+            GifPickerSheet()
+        }
+        .sheet(isPresented: $showContactShare) {
+            if let chat {
+                ContactPickerSheet(accountId: chat.accountId) { contact in
+                    app.send("Contact: \(contact.name)\nXMPP: xmpp:\(contact.jid)")
+                }
+            }
+        }
+        .sheet(isPresented: $showSchedule) {
+            ScheduleSendSheet(text: text) { date in
+                Task { await app.scheduleMessage(text, at: date) }
+                text = ""
+                focused = false
+            }
         }
         .photosPicker(isPresented: $showPhotoPicker, selection: $photos, maxSelectionCount: 8, matching: .images)
         .onChange(of: photos) { _, items in
@@ -222,6 +250,14 @@ struct ChatView: View {
             Button("Photo library") { showPhotoPicker = true }
             Button("Camera") { showCamera = true }
             Button("File") { showFilePicker = true }
+            Button("GIF") { showGIF = true }
+            Button("Share a contact") { showContactShare = true }
+            Button("Share location") {
+                locationSharer.share { text in
+                    if let text { app.send(text) }
+                    else { app.showToast("Location permission is needed to share a location.", error: true) }
+                }
+            }
             Button("Voice message") {
                 Task {
                     if await recorder.start() { Haptics.soft() } else { recordingError = true }
@@ -398,6 +434,7 @@ struct ComposerView: View {
     var onStopTyping: () -> Void
     var onRecordingError: () -> Void
     var onSendVoice: (URL, Double) -> Void
+    var onSchedule: () -> Void
 
     private var canSend: Bool { !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
@@ -443,6 +480,14 @@ struct ComposerView: View {
                                 if value.isEmpty { onStopTyping() }
                             }
                         if canSend {
+                            Button(action: onSchedule) {
+                                Image(systemName: "clock")
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundStyle(palette.secondaryText)
+                                    .frame(width: 30, height: 30)
+                            }
+                            .buttonStyle(PressableStyle())
+                            .transition(.scale.combined(with: .opacity))
                             Button(action: onSend) {
                                 Image(systemName: "arrow.up")
                                     .font(.system(size: 16, weight: .bold))
@@ -536,5 +581,52 @@ struct ComposerView: View {
         }
         .padding(.horizontal, 12).padding(.vertical, 9)
         .background(palette.surface)
+    }
+}
+
+
+struct ScheduleSendSheet: View {
+    @Environment(\.ward) private var palette
+    @Environment(\.dismiss) private var dismiss
+    var text: String
+    var onSchedule: (Date) -> Void
+    @State private var date = Date().addingTimeInterval(3600)
+
+    var body: some View {
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 18) {
+                HStack(spacing: 10) {
+                    IconTile(icon: "clock.badge.checkmark", color: .indigo, size: 38)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Schedule message").font(.headline)
+                        Text("Ward will send it while the app is open or connected.").font(.caption).foregroundStyle(palette.secondaryText)
+                    }
+                }
+                VStack(alignment: .leading, spacing: 7) {
+                    Text("MESSAGE").font(.caption2.weight(.semibold)).tracking(0.6).foregroundStyle(palette.tertiaryText)
+                    Text(text.isEmpty ? "Write a message first." : text)
+                        .font(.subheadline).foregroundStyle(text.isEmpty ? palette.tertiaryText : palette.text)
+                        .lineLimit(4)
+                        .padding(12).frame(maxWidth: .infinity, alignment: .leading)
+                        .background(palette.surfaceContainer, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+                DatePicker("Send at", selection: $date, in: Date()..., displayedComponents: [.date, .hourAndMinute])
+                    .datePickerStyle(.graphical)
+                    .tint(palette.accent)
+                Spacer()
+                Button("Schedule") {
+                    onSchedule(date)
+                    dismiss()
+                }
+                .buttonStyle(WardPrimaryButtonStyle())
+                .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || date < Date())
+            }
+            .padding(18)
+            .background(WardBackground())
+            .navigationTitle("Schedule")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Cancel") { dismiss() } } }
+        }
+        .presentationDetents([.large])
     }
 }

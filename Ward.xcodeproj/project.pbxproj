@@ -13,8 +13,13 @@
 		A26FFFDED7D93D05B7744EAC /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0B4B0AB89AE0A03B1C056BA /* Models.swift */; };
 		AB15758EB7F82055234362B1 /* Settings.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9988A0A88A2C906AEA09437 /* Settings.swift */; };
 		AD00F1F61FBBCF0617C35564 /* AppLockManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B806EF3E0C9DB84D2D2216ED /* AppLockManager.swift */; };
+		ACDC0564908C45269280E25C /* ChatExport.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE1459E963C664862BE1ED28 /* ChatExport.swift */; };
+		ACFA6859C6E9DA339331C148 /* FileCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = B97422FD0EC5DB2D88D0D181 /* FileCrypto.swift */; };
+		AB64135DA8C5D8B411B5868D /* LinkPreview.swift in Sources */ = {isa = PBXBuildFile; fileRef = B12C8B9E9B94645E032254D4 /* LinkPreview.swift */; };
+		A73AEA32579A1ABA2E536CE9 /* LocationSharer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B32FEE4A742E7AC83ABC76FC /* LocationSharer.swift */; };
 		AEC69D5C6CC7C7DDB323C83F /* Media.swift in Sources */ = {isa = PBXBuildFile; fileRef = BC7A333E5C6110AEA7910DC0 /* Media.swift */; };
 		A9A15E495DCA926371779681 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2FB6E43857DCE0BF8D82E80 /* NotificationManager.swift */; };
+		A2651368F0A836D86562D892 /* Tenor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD5147A9BF35F8426BEB2F41 /* Tenor.swift */; };
 		AA58E83528B8719F76267569 /* Database.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7E676AF9CACD9100B7B86BA /* Database.swift */; };
 		AA1B1256A7DC6F002B1A2030 /* SecureStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB534D225AACB7C7B9220D07 /* SecureStore.swift */; };
 		A4F3D9E563F1D7512F0F0139 /* CallOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB1ED7FFE1BD9D1742C430A1 /* CallOverlay.swift */; };
@@ -48,8 +53,13 @@
 		B0B4B0AB89AE0A03B1C056BA /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
 		B9988A0A88A2C906AEA09437 /* Settings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Settings.swift; sourceTree = "<group>"; };
 		B806EF3E0C9DB84D2D2216ED /* AppLockManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppLockManager.swift; sourceTree = "<group>"; };
+		BE1459E963C664862BE1ED28 /* ChatExport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatExport.swift; sourceTree = "<group>"; };
+		B97422FD0EC5DB2D88D0D181 /* FileCrypto.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileCrypto.swift; sourceTree = "<group>"; };
+		B12C8B9E9B94645E032254D4 /* LinkPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LinkPreview.swift; sourceTree = "<group>"; };
+		B32FEE4A742E7AC83ABC76FC /* LocationSharer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocationSharer.swift; sourceTree = "<group>"; };
 		BC7A333E5C6110AEA7910DC0 /* Media.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Media.swift; sourceTree = "<group>"; };
 		B2FB6E43857DCE0BF8D82E80 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		BD5147A9BF35F8426BEB2F41 /* Tenor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tenor.swift; sourceTree = "<group>"; };
 		B7E676AF9CACD9100B7B86BA /* Database.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Database.swift; sourceTree = "<group>"; };
 		BB534D225AACB7C7B9220D07 /* SecureStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureStore.swift; sourceTree = "<group>"; };
 		BB1ED7FFE1BD9D1742C430A1 /* CallOverlay.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CallOverlay.swift; sourceTree = "<group>"; };
@@ -151,8 +161,13 @@
 			isa = PBXGroup;
 			children = (
 				B806EF3E0C9DB84D2D2216ED /* AppLockManager.swift */,
+				BE1459E963C664862BE1ED28 /* ChatExport.swift */,
+				B97422FD0EC5DB2D88D0D181 /* FileCrypto.swift */,
+				B12C8B9E9B94645E032254D4 /* LinkPreview.swift */,
+				B32FEE4A742E7AC83ABC76FC /* LocationSharer.swift */,
 				BC7A333E5C6110AEA7910DC0 /* Media.swift */,
 				B2FB6E43857DCE0BF8D82E80 /* NotificationManager.swift */,
+				BD5147A9BF35F8426BEB2F41 /* Tenor.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -211,8 +226,13 @@
 				A26FFFDED7D93D05B7744EAC /* Models.swift in Sources */,
 				AB15758EB7F82055234362B1 /* Settings.swift in Sources */,
 				AD00F1F61FBBCF0617C35564 /* AppLockManager.swift in Sources */,
+				ACDC0564908C45269280E25C /* ChatExport.swift in Sources */,
+				ACFA6859C6E9DA339331C148 /* FileCrypto.swift in Sources */,
+				AB64135DA8C5D8B411B5868D /* LinkPreview.swift in Sources */,
+				A73AEA32579A1ABA2E536CE9 /* LocationSharer.swift in Sources */,
 				AEC69D5C6CC7C7DDB323C83F /* Media.swift in Sources */,
 				A9A15E495DCA926371779681 /* NotificationManager.swift in Sources */,
+				A2651368F0A836D86562D892 /* Tenor.swift in Sources */,
 				AA58E83528B8719F76267569 /* Database.swift in Sources */,
 				AA1B1256A7DC6F002B1A2030 /* SecureStore.swift in Sources */,
 				A4F3D9E563F1D7512F0F0139 /* CallOverlay.swift in Sources */,

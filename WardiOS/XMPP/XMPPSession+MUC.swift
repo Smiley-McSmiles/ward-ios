@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 #if canImport(FoundationNetworking)
 import FoundationNetworking
 #endif
@@ -161,6 +162,50 @@ extension XMPPSession {
 
     // MARK: Avatars
 
+    func requestAvatar(_ jid: String) {
+        Task {
+            if await fetchPepAvatar(jid) { return }
+            requestVCardAvatar(jid)
+        }
+    }
+
+    @discardableResult
+    func fetchPepAvatar(_ jid: String) async -> Bool {
+        guard isOnline else { return false }
+        let metadataRequest = "<pubsub xmlns='http://jabber.org/protocol/pubsub'><items node='urn:xmpp:avatar:metadata' max_items='1'/></pubsub>"
+        guard let result = await iqRequest(metadataRequest, to: jid, timeout: 15),
+              let items = result.child("pubsub")?.child("items"),
+              let item = items.children("item").first,
+              let hash = item.attr("id"), !hash.isEmpty,
+              let metadata = item.child("metadata", xmlns: NS.avatarMetadata),
+              let info = metadata.children("info").last else { return false }
+        if avatarHashes[jid] == hash, let contact = roster[jid], !contact.avatar.isEmpty { return true }
+        let dataRequest = "<pubsub xmlns='http://jabber.org/protocol/pubsub'><items node='urn:xmpp:avatar:data'><item id='\(XML.escape(hash))'/></items></pubsub>"
+        guard let dataResult = await iqRequest(dataRequest, to: jid, timeout: 20),
+              let dataNode = dataResult.child("pubsub")?.child("items")?.children("item").first?.child("data", xmlns: NS.avatarData),
+              let data = Data(base64Encoded: dataNode.trimmedText.replacingOccurrences(of: "\n", with: "")) else { return false }
+        let type = info.attr("type", "image/jpeg")
+        let ext = type.contains("png") ? "png" : type.contains("gif") ? "gif" : type.contains("webp") ? "webp" : "jpg"
+        let folder = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0].appendingPathComponent("Avatars", isDirectory: true)
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let file = folder.appendingPathComponent("pep-\(jid.hashValue)-\(hash).\(ext)")
+        try? data.write(to: file)
+        avatarHashes[jid] = hash
+        let stored = await storedContact(jid)
+        var contact = roster[jid] ?? stored ?? Contact(accountId: accountId, jid: jid)
+        contact.avatar = file.path
+        roster[jid] = contact
+        try? await database.saveContact(contact)
+        onContactChanged?(contact)
+        if let chat = try? await database.chat(accountId: accountId, jid: jid) {
+            var updated = chat
+            updated.avatar = file.path
+            updated = (try? await database.saveChat(updated)) ?? updated
+            onChatChanged?(updated)
+        }
+        return true
+    }
+
     func requestVCardAvatar(_ jid: String) {
         guard !vcardRequested.contains(jid), isOnline else { return }
         vcardRequested.insert(jid)
@@ -199,12 +244,25 @@ extension XMPPSession {
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let file = folder.appendingPathComponent("own-avatar.jpg")
         try? data.write(to: file)
+        await publishPepAvatar(data, mime: mime)
         account.avatar = file.path
         if var contact = roster[account.bareJID] {
             contact.avatar = file.path
             roster[account.bareJID] = contact
         }
         try? await database.saveAccount(account)
+    }
+
+    private func publishPepAvatar(_ data: Data, mime: String) async {
+        let hash = SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
+        let base64 = data.base64EncodedString()
+        let accessOptions = "<publish-options><x xmlns='\(NS.data)' type='submit'><field var='FORM_TYPE' type='hidden'><value>http://jabber.org/protocol/pubsub#publish-options</value></field><field var='pubsub#access_model'><value>open</value></field><field var='pubsub#max_items'><value>1</value></field></x></publish-options>"
+        let dataIQ = "<pubsub xmlns='http://jabber.org/protocol/pubsub'><publish node='\(NS.avatarData)'><item id='\(hash)'><data xmlns='\(NS.avatarData)'>\(base64)</data></item></publish>\(accessOptions)</pubsub>"
+        _ = connection?.send("<iq type='set' id='ward-pep-avatar-data-\(String.wardID())'>\(dataIQ)</iq>")
+        let metadata = "<metadata xmlns='\(NS.avatarMetadata)'><info id='\(hash)' bytes='\(data.count)' type='\(XML.escape(mime))'/></metadata>"
+        let metadataIQ = "<pubsub xmlns='http://jabber.org/protocol/pubsub'><publish node='\(NS.avatarMetadata)'><item id='\(hash)'>\(metadata)</item></publish>\(accessOptions)</pubsub>"
+        _ = connection?.send("<iq type='set' id='ward-pep-avatar-meta-\(String.wardID())'>\(metadataIQ)</iq>")
+        avatarHashes[account.bareJID] = hash
     }
 
     func publishNick(_ nick: String) {

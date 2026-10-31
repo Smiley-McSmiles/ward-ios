@@ -31,6 +31,7 @@ final class XMPPSession {
     private var lastPresenceStatus = ""
     var vcardRequested: Set<String> = []
     var activeCall: CallState?
+    var avatarHashes: [String: String] = [:]
 
     // Event callbacks. The app model installs these once and reacts on the main actor.
     var onStateChange: ((ConnectionState) -> Void)?

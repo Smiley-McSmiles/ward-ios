@@ -67,5 +67,7 @@
 	<true/>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Ward connects to your XMPP server. On a local network, iOS asks permission to reach it.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Ward shares your current location in a chat only when you tap Share location.</string>
 </dict>
 </plist>

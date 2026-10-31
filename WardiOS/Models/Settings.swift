@@ -92,6 +92,7 @@ enum SettingsSchema {
         c("chats.reaction_skin_tone", "Reaction skin tone", "Used for hand and people reactions", "chats", "Messages", "",
           [("", "Default"), ("🏻", "Light"), ("🏼", "Medium light"), ("🏽", "Medium"), ("🏾", "Medium dark"), ("🏿", "Dark")]),
         b("chats.confirm_delete", "Confirm “Delete for everyone”", "Ask before retracting a message for the other person", "chats", "Messages", true),
+        b("chats.link_previews", "Link previews", "Fetch a small Open Graph card for links in messages", "chats", "Sharing", true),
         b("chats.send_typing", "Send typing indicators", "", "chats", "Sharing", true),
         b("chats.show_typing", "Show typing indicators", "", "chats", "Sharing", true),
         b("chats.send_markers", "Send read markers", "", "chats", "Sharing", true),

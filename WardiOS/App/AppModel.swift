@@ -30,6 +30,7 @@ final class AppModel: ObservableObject {
     private var passwords: [Int64: String] = [:]
     private var typingTasks: [Int64: Task<Void, Never>] = [:]
     private var toastTask: Task<Void, Never>?
+    private var scheduledTasks: [Int64: Task<Void, Never>] = [:]
     private var started = false
 
     init() {
@@ -53,6 +54,7 @@ final class AppModel: ObservableObject {
                 for account in accounts where account.enabled {
                     connect(account)
                 }
+                await resumeScheduledMessages()
             } catch {
                 startupError = error.localizedDescription
                 isReady = true
@@ -228,6 +230,42 @@ final class AppModel: ObservableObject {
         }
     }
 
+    func registerAccount(jid rawJID: String, password: String,
+                         host: String = "", port: String = "", tls: String = "auto") async throws -> Account {
+        let trimmed = rawJID.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard trimmed.contains("@"), JID.valid(trimmed) else {
+            throw WardError.authentication("Enter an address like you@example.org.")
+        }
+        let jid = JID.bare(trimmed)
+        guard !accounts.contains(where: { $0.jid.caseInsensitiveCompare(jid) == .orderedSame }) else {
+            throw WardError.authentication("This account is already added.")
+        }
+        guard password.count >= 4 else { throw WardError.authentication("Choose a password with at least four characters.") }
+        let domain = JID.domain(jid)
+        let configuration = XMPPConfiguration(
+            jid: jid, password: password,
+            host: host.trimmingCharacters(in: .whitespaces).isEmpty ? domain : host.trimmingCharacters(in: .whitespaces),
+            port: UInt16(port), tlsMode: tls == "starttls" ? "required" : tls,
+            resource: "Ward", registration: XMPPRegistrationRequest(username: JID.local(jid), password: password))
+        let connection = XMPPConnection(configuration: configuration)
+        let waiter = RegistrationWaiter()
+        try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+            waiter.continuation = continuation
+            connection.onRegistered = { waiter.finish($0) }
+            connection.onError = { message in
+                waiter.finish(.failure(WardError.authentication(message)))
+            }
+            connection.connect()
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 35_000_000_000)
+                waiter.finish(.failure(WardError.network("The server did not answer the account request. It may require a captcha or another registration method.")))
+            }
+        }
+        connection.disconnect()
+        return try await addAccount(jid: jid, password: password, remember: true,
+                                    host: host, port: port, tls: tls)
+    }
+
     // MARK: - Chats
 
     func chat(id: Int64) -> Chat? { chats.first { $0.id == id } }
@@ -327,6 +365,74 @@ final class AppModel: ObservableObject {
         }
     }
 
+    func scheduleMessage(_ text: String, at date: Date) async {
+        let body = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !body.isEmpty, let chat = selectedChat, let database else { return }
+        let id = String.wardID()
+        var message = Message(chatId: chat.id, stanzaId: id, originId: id,
+                              sender: account(id: chat.accountId)?.bareJID ?? "",
+                              senderName: "You", direction: 1,
+                              timestamp: Date().millis, body: body, isMarkdown: true,
+                              kind: "text", status: 0, scheduledAt: max(date.millis, Date().millis + 1000))
+        guard let stored = try? await database.insertMessage(message) else { return }
+        message = stored
+        messages[chat.id, default: []].append(stored)
+        messages[chat.id]?.sort { $0.timestamp == $1.timestamp ? $0.id < $1.id : $0.timestamp < $1.timestamp }
+        var updated = chat
+        updated.preview = "Scheduled: \(body)"
+        updated.previewSender = "You"
+        updated.lastActivity = Date().millis
+        if let saved = try? await database.saveChat(updated) { upsert(chat: saved) }
+        scheduleFire(message: stored, chat: chat)
+        showToast("Message scheduled for \(date.formatted(date: .abbreviated, time: .shortened)).")
+    }
+
+    func cancelScheduled(_ message: Message) async {
+        scheduledTasks[message.id]?.cancel()
+        scheduledTasks.removeValue(forKey: message.id)
+        try? await database?.deleteMessage(id: message.id)
+        if var list = messages[message.chatId] {
+            list.removeAll { $0.id == message.id }
+            messages[message.chatId] = list
+        }
+        if let chat = chat(id: message.chatId) { await reloadChats() }
+    }
+
+    private func resumeScheduledMessages() async {
+        guard let database else { return }
+        let pending = (try? await database.scheduledMessages()) ?? []
+        for message in pending {
+            guard let chat = chat(id: message.chatId) else { continue }
+            scheduleFire(message: message, chat: chat)
+        }
+    }
+
+    private func scheduleFire(message: Message, chat: Chat) {
+        scheduledTasks[message.id]?.cancel()
+        let when = message.scheduledAt ?? Date().millis
+        let delay = max(0.2, Double(when - Date().millis) / 1000.0)
+        scheduledTasks[message.id] = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+            guard !Task.isCancelled, let self else { return }
+            await self.fireScheduled(messageId: message.id, chat: chat)
+        }
+    }
+
+    private func fireScheduled(messageId: Int64, chat: Chat) async {
+        scheduledTasks.removeValue(forKey: messageId)
+        guard let database, let latest = try? await database.message(id: messageId),
+              latest.scheduledAt != nil else { return }
+        guard let session = sessions[chat.accountId], session.isOnline else {
+            // Stay scheduled and try again shortly instead of silently losing the message.
+            var retry = latest
+            retry.scheduledAt = Date().addingTimeInterval(60).millis
+            try? await database.updateMessage(retry)
+            scheduleFire(message: retry, chat: chat)
+            return
+        }
+        await session.sendScheduled(chat: chat, message: latest)
+    }
+
     func sendVoice(_ url: URL, duration: Double) {
         guard let chat = selectedChat, let session = sessions[chat.accountId] else { return }
         Task {
@@ -390,6 +496,17 @@ final class AppModel: ObservableObject {
         var value = chat
         change(&value)
         if let database, let saved = try? await database.saveChat(value) { upsert(chat: saved) }
+    }
+
+    func exportChat(_ chat: Chat) async -> URL? {
+        let all = (try? await database?.messages(chatId: chat.id, limit: 5000)) ?? messages(for: chat.id)
+        let contact = self.contact(jid: chat.jid, accountId: chat.accountId)
+        do {
+            return try ChatExport.write(chat: chat, messages: all, contact: contact)
+        } catch {
+            showToast("Could not export this chat.", error: true)
+            return nil
+        }
     }
 
     func clearHistory(_ chat: Chat) async {
@@ -709,5 +826,18 @@ final class AppModel: ObservableObject {
         let renderer = UIGraphicsImageRenderer(size: target)
         let resized = renderer.image { _ in image.draw(in: CGRect(origin: .zero, size: target)) }
         return resized.jpegData(compressionQuality: 0.86) ?? data
+    }
+}
+
+
+@MainActor
+private final class RegistrationWaiter {
+    var continuation: CheckedContinuation<Void, Error>?
+    private var done = false
+    func finish(_ result: Result<Void, Error>) {
+        guard !done else { return }
+        done = true
+        continuation?.resume(with: result)
+        continuation = nil
     }
 }

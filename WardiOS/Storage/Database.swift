@@ -53,6 +53,7 @@ actor WardDatabase {
             originId TEXT NOT NULL DEFAULT '',
             timestamp INTEGER NOT NULL,
             body TEXT NOT NULL DEFAULT '',
+            scheduledAt INTEGER NOT NULL DEFAULT 0,
             json TEXT NOT NULL
         );
         CREATE UNIQUE INDEX IF NOT EXISTS messages_stanza ON messages (chatId, stanzaId) WHERE stanzaId != '';
@@ -88,6 +89,9 @@ actor WardDatabase {
         );
         """
         try Self.exec(db, sql)
+        // Add columns introduced after the first schema without throwing away local history.
+        // SQLite reports a duplicate-column error if the column already exists; that is fine.
+        try? Self.exec(db, "ALTER TABLE messages ADD COLUMN scheduledAt INTEGER NOT NULL DEFAULT 0;")
     }
 
     // MARK: SQL primitives
@@ -306,24 +310,28 @@ actor WardDatabase {
             return nil
         }
         var value = message
-        try run("INSERT INTO messages (chatId, stanzaId, originId, timestamp, body, json) VALUES (?, ?, ?, ?, ?, ?)",
-                [value.chatId, value.stanzaId, value.originId, value.timestamp, value.body, try json(value)])
+        try run("INSERT INTO messages (chatId, stanzaId, originId, timestamp, body, scheduledAt, json) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                [value.chatId, value.stanzaId, value.originId, value.timestamp, value.body, value.scheduledAt ?? 0, try json(value)])
         value.id = sqlite3_last_insert_rowid(db)
         return value
     }
 
     func updateMessage(_ message: Message) throws {
         guard message.id != 0 else { return }
-        try run("UPDATE messages SET stanzaId=?, originId=?, timestamp=?, body=?, json=? WHERE id=?",
-                [message.stanzaId, message.originId, message.timestamp, message.body, try json(message), message.id])
+        try run("UPDATE messages SET stanzaId=?, originId=?, timestamp=?, body=?, scheduledAt=?, json=? WHERE id=?",
+                [message.stanzaId, message.originId, message.timestamp, message.body, message.scheduledAt ?? 0, try json(message), message.id])
     }
 
     func deleteMessage(id: Int64) throws { try run("DELETE FROM messages WHERE id=?", [id]) }
     func clearMessages(chatId: Int64) throws { try run("DELETE FROM messages WHERE chatId=?", [chatId]) }
     func clearAllMessages() throws { try run("DELETE FROM messages") }
 
-    func search(chatId: Int64?, query: String) throws -> [Message] {
-        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+    func scheduledMessages() throws -> [Message] {
+        try query("SELECT json FROM messages WHERE scheduledAt > 0 ORDER BY scheduledAt ASC") { decode(Message.self, $0) }
+    }
+
+    func search(chatId: Int64?, query searchText: String) throws -> [Message] {
+        let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return [] }
         let pattern = "%\(trimmed)%"
         let sql = chatId == nil

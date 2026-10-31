@@ -124,6 +124,10 @@ struct MessageRow: View {
                                      compact: layout == "compact")
                     }
                 }
+                if let previewURL {
+                    LinkPreviewCard(urlString: previewURL)
+                        .padding(.top, 2)
+                }
                 HStack(spacing: 4) {
                     if message.edited {
                         Text("edited").font(.system(size: 9)).foregroundStyle(textColor.opacity(0.62))
@@ -132,11 +136,20 @@ struct MessageRow: View {
                         Image(systemName: "lock.fill").font(.system(size: 8)).foregroundStyle(textColor.opacity(0.6))
                     }
                     Spacer(minLength: 6)
-                    Text(WardFormat.time(message.date, settings: app.settings))
-                        .font(.system(size: 9.5))
-                        .foregroundStyle(textColor.opacity(0.62))
-                        .contentTransition(.numericText())
-                    if outgoing { statusIcon }
+                    if let scheduled = message.scheduledAt, scheduled > Date().millis {
+                        Image(systemName: "clock.badge.checkmark")
+                            .font(.system(size: 9))
+                            .foregroundStyle(textColor.opacity(0.72))
+                        Text("Scheduled \(WardFormat.chatListTime(Date(millis: scheduled), settings: app.settings))")
+                            .font(.system(size: 9.5))
+                            .foregroundStyle(textColor.opacity(0.72))
+                    } else {
+                        Text(WardFormat.time(message.date, settings: app.settings))
+                            .font(.system(size: 9.5))
+                            .foregroundStyle(textColor.opacity(0.62))
+                            .contentTransition(.numericText())
+                        if outgoing { statusIcon }
+                    }
                 }
                 .padding(.top, 1)
             }
@@ -151,6 +164,19 @@ struct MessageRow: View {
             }
             .shadow(color: .black.opacity(palette.dark ? 0.18 : 0.05), radius: 4, y: 2)
         }
+    }
+
+    private var previewURL: String? {
+        guard app.settings.bool("chats.link_previews"), message.attachments.isEmpty,
+              !message.retracted, !message.body.isEmpty else { return nil }
+        guard let detector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue) else { return nil }
+        let range = NSRange(message.body.startIndex..., in: message.body)
+        let links = detector.matches(in: message.body, options: [], range: range).compactMap { match -> String? in
+            guard let url = match.url, let scheme = url.scheme?.lowercased(),
+                  scheme == "https" || scheme == "http" else { return nil }
+            return url.absoluteString
+        }
+        return links.first
     }
 
     private var displayBody: String {
@@ -244,7 +270,11 @@ struct MessageRow: View {
         Button { onDetails() } label: { Label("Details", systemImage: "info.circle") }
         if outgoing && !message.retracted {
             Divider()
-            Button(role: .destructive) { onDelete() } label: { Label("Delete for everyone", systemImage: "trash") }
+            if message.scheduledAt != nil {
+                Button(role: .destructive) { onDelete() } label: { Label("Delete scheduled message", systemImage: "trash") }
+            } else {
+                Button(role: .destructive) { onDelete() } label: { Label("Delete for everyone", systemImage: "trash") }
+            }
         }
     }
 

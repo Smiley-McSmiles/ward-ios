@@ -440,6 +440,18 @@ extension XMPPSession {
         return message
     }
 
+    func sendScheduled(chat: Chat, message: Message) async {
+        guard message.id != 0 else { return }
+        var value = message
+        value.scheduledAt = nil
+        value.timestamp = Date().millis
+        value.status = 0
+        try? await database.updateMessage(value)
+        onMessageChanged?(value)
+        _ = await touchChat(chat, message: value, outgoing: true)
+        await transmit(message: value, chat: chat)
+    }
+
     private func transmit(message original: Message, chat: Chat) async {
         guard isOnline, let connection = connection else {
             var queued = original

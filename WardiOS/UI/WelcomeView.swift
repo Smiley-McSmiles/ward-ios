@@ -352,11 +352,14 @@ struct FieldBox<Content: View>: View {
 }
 
 private struct CreateAccountPage: View {
+    @EnvironmentObject private var app: AppModel
     @Environment(\.ward) private var palette
     var onBack: () -> Void
     @State private var server = ""
     @State private var username = ""
     @State private var password = ""
+    @State private var confirm = ""
+    @State private var busy = false
     @State private var error = ""
 
     var body: some View {
@@ -368,13 +371,14 @@ private struct CreateAccountPage: View {
                 .foregroundStyle(palette.secondaryText).padding(.top, 14)
 
                 Text("Create an account").font(.system(size: 32, weight: .bold, design: .rounded))
-                Text("In-band registration depends on your server. Enter your server and desired username, or create the account on your provider's website and come back to sign in.")
+                Text("Ward asks your server to create the account with XEP-0077. Not every server allows this; if it asks for a captcha or refuses, create the account on the provider's website and sign in instead.")
                     .font(.subheadline).foregroundStyle(palette.secondaryText)
 
                 VStack(spacing: 12) {
                     FieldBox(icon: "server.rack", title: "Server") {
                         TextField("example.org", text: $server)
                             .textInputAutocapitalization(.never).autocorrectionDisabled()
+                            .keyboardType(.URL)
                     }
                     FieldBox(icon: "person", title: "Username") {
                         TextField("alice", text: $username)
@@ -382,19 +386,30 @@ private struct CreateAccountPage: View {
                     }
                     FieldBox(icon: "lock", title: "Password") {
                         SecureField("Choose a password", text: $password)
+                            .textContentType(.newPassword)
+                    }
+                    FieldBox(icon: "lock.badge.checkmark", title: "Confirm password") {
+                        SecureField("Repeat the password", text: $confirm)
+                            .textContentType(.newPassword)
                     }
                 }
 
                 if !error.isEmpty {
-                    Label(error, systemImage: "info.circle.fill")
+                    Label(error, systemImage: "exclamationmark.triangle.fill")
                         .font(.footnote).foregroundStyle(palette.danger)
+                        .transition(.opacity)
                 }
 
-                Button("Check registration support") {
-                    error = "Account creation needs a server that supports XEP-0077. Ward for iOS is not wiring in-band registration in this build; create the account on your server and sign in."
-                    Haptics.warning()
+                Button {
+                    create()
+                } label: {
+                    HStack {
+                        if busy { ProgressView().tint(palette.onAccent) }
+                        Text(busy ? "Creating account…" : "Create account")
+                    }
                 }
                 .buttonStyle(WardPrimaryButtonStyle())
+                .disabled(busy)
 
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Recommended servers").font(.subheadline.weight(.semibold))
@@ -411,6 +426,39 @@ private struct CreateAccountPage: View {
             }
             .padding(.horizontal, 24)
             .frame(maxWidth: 480).frame(maxWidth: .infinity)
+        }
+    }
+
+    private func create() {
+        error = ""
+        let host = server.trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: "https://", with: "")
+            .replacingOccurrences(of: "http://", with: "")
+            .trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let user = username.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !host.isEmpty, !user.isEmpty else {
+            error = "Enter a server and a username."; Haptics.error(); return
+        }
+        guard password.count >= 4 else {
+            error = "Choose a password with at least four characters."; Haptics.error(); return
+        }
+        guard password == confirm else {
+            error = "The passwords do not match."; Haptics.error(); return
+        }
+        let jid = user.contains("@") ? user : "\(user)@\(host)"
+        guard JID.valid(jid) else {
+            error = "That username and server do not make a valid address."; Haptics.error(); return
+        }
+        busy = true
+        Task {
+            do {
+                _ = try await app.registerAccount(jid: jid, password: password)
+                Haptics.success()
+            } catch {
+                self.error = error.localizedDescription
+                Haptics.error()
+            }
+            busy = false
         }
     }
 }

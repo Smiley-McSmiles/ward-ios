@@ -16,6 +16,7 @@ struct ChatDetailsSheet: View {
     @State private var showDelete = false
     @State private var showClear = false
     @State private var showSearch = false
+    @State private var exportItem: ExportItem? = nil
     @State private var inviteJID = ""
     @State private var subject = ""
 
@@ -45,6 +46,7 @@ struct ChatDetailsSheet: View {
             }
             .sheet(isPresented: $showMembers) { MembersSheet(chat: current) }
             .sheet(isPresented: $showSearch) { ChatSearchSheet(chat: current) }
+            .sheet(item: $exportItem) { item in ShareSheet(items: [item.url as Any]) }
             .sheet(isPresented: $showDevices) { DevicesSheet(accountId: chat.accountId, jid: chat.jid) }
             .alert("Invite to group", isPresented: $showInvite) {
                 TextField("alice@example.org", text: $inviteJID)
@@ -144,6 +146,12 @@ struct ChatDetailsSheet: View {
             Divider().padding(.leading, 50)
             Button { Task { await app.setArchived(current, true); dismiss() } } label: {
                 DetailRow(icon: "archivebox.fill", color: palette.slate, title: "Archive", value: "", chevron: false)
+            }
+            Divider().padding(.leading, 50)
+            Button {
+                Task { if let url = await app.exportChat(current) { exportItem = ExportItem(url: url) } }
+            } label: {
+                DetailRow(icon: "square.and.arrow.up.fill", color: palette.blue, title: "Export chat", value: "", chevron: false)
             }
         }
         .padding(.horizontal, 14)
@@ -1147,5 +1155,137 @@ struct GlobalSearchView: View {
             }
             .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } } }
         }
+    }
+}
+
+
+// MARK: - Contact picker
+
+struct ContactPickerSheet: View {
+    @EnvironmentObject private var app: AppModel
+    @Environment(\.ward) private var palette
+    @Environment(\.dismiss) private var dismiss
+    var accountId: Int64
+    var onPick: (Contact) -> Void
+
+    private var contacts: [Contact] {
+        app.contacts.filter { $0.accountId == accountId && $0.inRoster }
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if contacts.isEmpty {
+                    ContentUnavailableView("No contacts", systemImage: "person.2",
+                                           description: Text("Add a contact before sharing one."))
+                } else {
+                    List(contacts) { contact in
+                        Button {
+                            onPick(contact)
+                            dismiss()
+                        } label: {
+                            HStack(spacing: 12) {
+                                AvatarView(name: contact.name, jid: contact.jid, size: 40, presence: contact.presence, imagePath: contact.avatar)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(contact.name).font(.subheadline.weight(.medium)).foregroundStyle(palette.text)
+                                    Text(contact.jid).font(.caption).foregroundStyle(palette.secondaryText)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Share a contact")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .topBarTrailing) { Button("Cancel") { dismiss() } } }
+        }
+    }
+}
+
+// MARK: - Tenor GIF picker
+
+struct GifPickerSheet: View {
+    @EnvironmentObject private var app: AppModel
+    @Environment(\.ward) private var palette
+    @Environment(\.dismiss) private var dismiss
+    @State private var query = ""
+    @State private var gifs: [String] = []
+    @State private var loading = true
+    @State private var error = ""
+
+    private let columns = [GridItem(.flexible(), spacing: 6), GridItem(.flexible(), spacing: 6)]
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                HStack {
+                    Image(systemName: "magnifyingglass").foregroundStyle(palette.secondaryText)
+                    TextField("Search Tenor", text: $query)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .onSubmit { Task { await search() } }
+                    if !query.isEmpty {
+                        Button { query = ""; Task { await search() } } label: {
+                            Image(systemName: "xmark.circle.fill").foregroundStyle(palette.tertiaryText)
+                        }
+                    }
+                }
+                .padding(11)
+                .background(palette.surfaceContainer, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .padding(12)
+
+                if loading {
+                    ProgressView("Finding GIFs…").frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if !error.isEmpty {
+                    ContentUnavailableView("No GIFs", systemImage: "photo.on.rectangle.angled", description: Text(error))
+                } else {
+                    ScrollView {
+                        LazyVGrid(columns: columns, spacing: 6) {
+                            ForEach(gifs, id: \.self) { string in
+                                AsyncImage(url: URL(string: string)) { phase in
+                                    if let image = phase.image {
+                                        image.resizable().scaledToFill()
+                                    } else {
+                                        Rectangle().fill(palette.surfaceContainer)
+                                    }
+                                }
+                                .frame(height: 150)
+                                .clipped()
+                                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                                .onTapGesture {
+                                    app.send(string)
+                                    dismiss()
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 0)
+                    }
+                    .scrollIndicators(.hidden)
+                }
+            }
+            .background(WardBackground())
+            .navigationTitle("GIFs from Tenor")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) { Button("Done") { dismiss() } }
+            }
+            .task { await search() }
+            .onChange(of: query) { _, _ in
+                Task {
+                    try? await Task.sleep(nanoseconds: 450_000_000)
+                    await search()
+                }
+            }
+        }
+    }
+
+    private func search() async {
+        loading = true
+        error = ""
+        let results = await TenorService.shared.search(query)
+        gifs = results
+        loading = false
+        if results.isEmpty { error = "Check your connection and try another search." }
     }
 }

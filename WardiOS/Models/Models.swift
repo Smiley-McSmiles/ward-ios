@@ -185,6 +185,7 @@ struct Message: Codable, Identifiable, Hashable {
     var reactions: [Reaction] = []
     var attachments: [Attachment] = []
     var raw: String = ""
+    var scheduledAt: Int64? = nil
 
     var isOutgoing: Bool { direction == 1 }
     var isFile: Bool { kind == MessageKind.file.rawValue }

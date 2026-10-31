@@ -29,5 +29,3 @@ targets:
         OTHER_LDFLAGS: "-lsqlite3"
     info:
       path: WardiOS/Info.plist
-
-# No external packages: Ward uses Network, Security, CryptoKit, SQLite3 and SwiftUI.

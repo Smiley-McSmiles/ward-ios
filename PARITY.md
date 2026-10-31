@@ -8,17 +8,17 @@ instead of pretending a feature works.
 
 | Android feature | iOS |
 | --- | --- |
-| Sign in, several accounts, custom host/port/TLS, invites | Yes. Same `host`, `port` and TLS options; invite links and `xmpp:` URLs prefill sign-in |
+| Sign in, several accounts, custom host/port/TLS, invites | Yes. Same `host`, `port` and TLS options; invite links and `xmpp:` URLs prefill sign-in. XEP-0077 account creation is available when the server offers it |
 | Self-signed certificate handling | Trust on first use with a pinned leaf fingerprint; changed certificates are refused |
 | Roster, presence, subscriptions, blocking | Yes, including manual subscription requests and contact requests |
 | Contacts, contact requests, rename, groups | Yes; rename is stored locally and pushed to the roster |
-| Profile photos: PEP and vCard fallback | vCard photo fetch and publishing; PEP avatars are not fetched yet |
+| Profile photos: PEP and vCard fallback | Yes: XEP-0084 PEP metadata/data fetch and publishing, with vCard fallback |
 | One-to-one chats, carbons, MAM catch-up, history | Yes, with deduplication between carbons, echoes and MAM pages |
 | Markdown, code blocks, quotes, lists, tables, links | Yes, with horizontal code blocks, syntax colouring and copy |
 | Replies, reactions, edits, retractions, receipts, read markers | Yes |
 | Typing notifications, drafts, mentions, `/me`, message search | Yes, per-chat search; global search is not exposed |
 | Message layout, text scale, accent colours, light/dark | Yes: bubbles/cozy/compact, 80–200% type, nine accents |
-| File/image upload, previews | Yes: XEP-0363 slots, photo/file pickers, camera, image viewer, video player, Quick Look |
+| File/image upload, previews | Yes: XEP-0363 slots, photo/file pickers, camera, image viewer, video player, Quick Look; incoming XEP-0454 files are decrypted |
 | Voice messages | Yes: AAC recording, waveform, playback progress |
 | Groups and channels, private/public presets, members, roles, moderation | Yes: join, leave, topic, nickname, members, roles, affiliations, kick, ban, invite |
 | Topics, nicknames, invites, bookmarks with autojoin, group search | Yes for topics, nicknames, invites and bookmarks; group search is address based |
@@ -30,12 +30,12 @@ instead of pretending a feature works.
 | Block screenshots and recent-apps preview | A privacy shroud and screen-capture warning; iOS cannot hard-block screenshots |
 | Preferences generated from a typed schema | Yes, same groups and defaults (desktop-only switches omitted) |
 | OMEMO device fingerprints, trust, BTBV | Device lists with trust/distrust/forget; fingerprints appear when a bundle is fetched. The ratchet itself is not wired |
-| Encrypted files (XEP-0454 aesgcm) | Not yet |
+| Encrypted files (XEP-0454 aesgcm) | Receiving and decryption yes. Encrypted upload stays gated on stanza encryption so the key never travels in plaintext |
 | OMEMO 2 / SCE, legacy OMEMO 0.3 | Not yet. Explicitly encrypted chats refuse to send rather than downgrade |
 | OpenPGP (XEP-0373/0374) | Not yet |
 | Audio/video calls (Jingle, WebRTC, XEP-0353) | JMI propose/accept/reject/finish signalling and the full call UI; audio/video media is not wired |
-| Scheduled send, Tenor GIFs, location and contact sharing | Not yet |
-| Chat export, global search, link previews | Global message search is available from the chat list menu; export and link previews are not yet |
+| Scheduled send, Tenor GIFs, location and contact sharing | Yes: scheduled messages survive relaunch, Tenor search, vCard text and OpenStreetMap location links |
+| Chat export, global search, link previews | Yes: global search from the chat list, HTML export from chat details, optional Open Graph previews |
 
 ## Deliberate differences
 
@@ -53,5 +53,5 @@ instead of pretending a feature works.
 2. Add WebRTC media: Jingle session negotiation, ICE/DTLS-SRTP, CallKit, audio routing and
    video preview.
 3. Add OpenPGP with a Swift/Objective-C PGP implementation.
-4. Add AES-GCM encrypted uploads for encrypted chats.
-5. Add chat export, scheduled send, GIF search and contact/location sharing.
+4. Activate AES-GCM encrypted uploads once the stanza itself is encrypted; the file crypto and
+   receive path are already in place.

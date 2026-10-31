@@ -8,10 +8,10 @@ reactions, server administration and an interface built around Apple's design la
   <img src="WardiOS/Resources/Assets.xcassets/WardLogo.imageset/ward-512.png" width="128" alt="Ward icon">
 </p>
 
-> **Status:** this is a complete native app scaffold with a working XMPP core, local history,
-> chat UI, group chats, media, settings, app lock and server tools. OMEMO/OpenPGP ratchets and
-> WebRTC call media are the two large pieces that are not finished; see [PARITY.md](PARITY.md).
-> The app is deliberately honest in the UI instead of silently downgrading an encrypted chat.
+> **Status:** this is a working native app with an XMPP core, local history, chat UI, group
+> chats, media, settings, app lock and server tools. OMEMO/OpenPGP ratchets and WebRTC call
+> media are the two large pieces that are not finished; see [PARITY.md](PARITY.md). The app is
+> deliberately honest in the UI instead of silently downgrading an encrypted chat.
 
 ## Highlights
 
@@ -22,6 +22,7 @@ reactions, server administration and an interface built around Apple's design la
 - **A real XMPP client.** TCP/TLS with STARTTLS and trust-on-first-use certificate pinning,
   SASL PLAIN/SCRAM-SHA-1/SCRAM-SHA-256, roster and presence, resource binding, stream
   management acknowledgements, keepalive and automatic reconnection with exponential backoff.
+  In-band account creation (XEP-0077) is available when the server allows it.
 - **Conversations.** One-to-one and group chats, carbons, MAM catch-up, replies, reactions,
   edits, retractions, delivery/read receipts, typing indicators, drafts, mentions, per-chat
   and global search, pins, mutes, archives and message requests.
@@ -29,12 +30,16 @@ reactions, server administration and an interface built around Apple's design la
   kicks, bans, invites and bookmarks with autojoin.
 - **Media.** HTTP file upload (XEP-0363), photo/file pickers, camera, image previews, video
   playback, file Quick Look, voice recording and playback, and the same image/audio/file
-  metadata as the Android app. Media is cached locally and can be cleared.
+  metadata as the Android app. XEP-0454 AES-GCM attachments are decrypted transparently; local
+  media is cached and can be cleared.
 - **Server tools.** Every ad-hoc command the server advertises (XEP-0050) with native forms,
   notes and previous/next/complete/cancel, a live XML console with raw sending, and a service
   discovery browser.
+- **Everyday extras.** PEP and vCard avatars, Open Graph link previews, scheduled sending,
+  chat export to HTML, Tenor GIF search, and contact/location sharing.
 - **Privacy.** Keychain-backed passwords, an app passcode with Face ID/Touch ID, a screen
-  privacy shroud, ephemeral notification previews and no analytics.
+  privacy shroud, ephemeral notification previews and no analytics. Link previews are optional
+  and fetched only when enabled.
 - **Same icon.** The iOS app icon and in-app logo are generated from Ward's original shield
   artwork.
 
