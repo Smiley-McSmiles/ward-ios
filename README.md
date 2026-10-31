@@ -8,6 +8,20 @@ reactions, server administration and an interface built around Apple's design la
   <img src="WardiOS/Resources/Assets.xcassets/WardLogo.imageset/ward-512.png" width="128" alt="Ward icon">
 </p>
 
+<p align="center">
+  <a href="https://github.com/Smiley-McSmiles/ward-ios/actions/workflows/ios.yml"><img src="https://github.com/Smiley-McSmiles/ward-ios/actions/workflows/ios.yml/badge.svg" alt="iOS build"></a>
+  <img src="https://img.shields.io/badge/iOS-17%2B-blue.svg?style=flat-square" alt="iOS 17+">
+  <img src="https://img.shields.io/badge/SwiftUI-native-0D96F6.svg?style=flat-square" alt="SwiftUI">
+  <img src="https://img.shields.io/badge/protocol-XMPP%20%7C%20OMEMO-purple.svg?style=flat-square" alt="XMPP">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg?style=flat-square" alt="MIT License"></a>
+</p>
+
+<p align="center"><strong>Private messaging on the open XMPP network, built for iPhone and iPad.</strong></p>
+
+<p align="center">
+  <img src="docs/welcome.png" width="300" alt="Ward welcome screen">
+</p>
+
 > **Status:** this is a working native app with an XMPP core, local history, chat UI, group
 > chats, media, settings, app lock and server tools. OMEMO/OpenPGP ratchets and WebRTC call
 > media are the two large pieces that are not finished; see [PARITY.md](PARITY.md). The app is
@@ -42,6 +56,17 @@ reactions, server administration and an interface built around Apple's design la
   and fetched only when enabled.
 - **Same icon.** The iOS app icon and in-app logo are generated from Ward's original shield
   artwork.
+
+## Encryption and privacy
+
+Ward's design keeps secrets on your device: account passwords live in the Keychain, the app
+passcode is salted and hashed, and the screen is hidden in the app switcher. Incoming
+XEP-0454 AES-GCM files are decrypted locally. Link previews are optional and fetched without
+cookies or analytics.
+
+The OMEMO/OpenPGP ratchets and WebRTC media are the remaining large engineering pieces. The UI
+does not silently downgrade an explicitly encrypted chat: sending OMEMO or OpenPGP is blocked
+until the ratchet is wired, and new unencrypted chats show a visible warning.
 
 ## Requirements
 
@@ -121,9 +146,24 @@ and preserves full-text search without exposing a second schema to every screen.
   reconnects when it returns to the foreground; it cannot promise Android-style always-on
   delivery. Use a server with push (XEP-0357) or keep the app open for time-sensitive messaging.
 
+## Status
+
+The simulator build is exercised by the GitHub Actions `iOS` workflow on every push, including
+launching the app in the simulator. The app is usable for plaintext one-to-one and group XMPP
+messaging, files, voice notes, administration and daily extras. OMEMO/OpenPGP, WebRTC call
+media and encrypted uploads are the remaining parity work; [PARITY.md](PARITY.md) tracks the
+full matrix.
+
+## Contributing
+
+Bug reports and interoperability reports are welcome, especially XML logs from OMEMO failures,
+Prosody/ejabberd admin commands and Jingle calls. Please do not paste private keys, passwords or
+personal messages. Open an issue or a pull request at
+[Smiley-McSmiles/ward-ios](https://github.com/Smiley-McSmiles/ward-ios).
+
 ## License
 
-MIT, matching Ward. The Ward icon is Ward's icon. See [LICENSE](LICENSE).
+MIT-licensed, like Ward. The Ward icon is Ward's icon. See [LICENSE](LICENSE).
 
 ## Verification
 
