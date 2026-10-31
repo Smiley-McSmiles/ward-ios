@@ -6,6 +6,8 @@ cd "$(dirname "$0")/.."
 APP="${APP_PATH:-build/Build/Products/Debug-iphonesimulator/Ward.app}"
 OUT="${OUT_DIR:-fastlane/screenshots/en-US}"
 mkdir -p "$OUT"
+echo "Screenshot source: $APP"
+xcrun simctl list devices available | sed -n '1,120p'
 
 pick_device() {
   local wanted="$1"
@@ -13,15 +15,28 @@ pick_device() {
   if xcrun simctl list devices available | grep -q "$wanted ("; then echo "$wanted"; else echo "$fallback"; fi
 }
 
+wait_booted() {
+  local device="$1"
+  for _ in $(seq 1 60); do
+    if xcrun simctl list devices | grep -q "$device (.*) (Booted)"; then return 0; fi
+    sleep 2
+  done
+  return 1
+}
+
 capture() {
   local device="$1"
   local prefix="$2"
   if ! xcrun simctl list devices available | grep -q "$device ("; then
     echo "Skipping unavailable simulator: $device"
-    return
+    return 0
   fi
+  echo "Booting $device"
   xcrun simctl boot "$device" 2>/dev/null || true
-  xcrun simctl bootstatus "$device" -b
+  if ! wait_booted "$device"; then
+    echo "Simulator did not boot in time: $device"
+    return 0
+  fi
   xcrun simctl install "$device" "$APP"
   xcrun simctl privacy "$device" grant notifications org.ward.ios 2>/dev/null || true
   xcrun simctl status_bar "$device" override --time "9:41" --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4 2>/dev/null || true
@@ -29,6 +44,7 @@ capture() {
   for spec in "chats:-ward-demo" "conversation:-ward-demo -ward-demo-chat" "settings:-ward-demo -ward-demo-settings"; do
     local name="${spec%%:*}"
     local args="${spec#*:}"
+    echo "Capturing $name on $device"
     xcrun simctl terminate "$device" org.ward.ios 2>/dev/null || true
     xcrun simctl launch "$device" org.ward.ios $args >/dev/null
     sleep 5
@@ -38,7 +54,8 @@ capture() {
 }
 
 PHONE=$(pick_device "iPhone 16 Pro Max" "iPhone 16 Plus")
-TABLET=$(pick_device "iPad Pro 13-inch (M4)" "iPad Pro (12.9-inch) (6th generation)")
 capture "$PHONE" "6.9-inch"
+TABLET=$(pick_device "iPad Pro 13-inch (M4)" "iPad Pro (12.9-inch) (6th generation)")
 capture "$TABLET" "13-inch-ipad"
 echo "Screenshots written to $OUT"
+ls -la "$OUT"
