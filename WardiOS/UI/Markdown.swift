@@ -89,7 +89,7 @@ enum MarkdownBlock: Identifiable {
         case .code(let language, let code): return "c-\(language)-\(code.hashValue)"
         case .quote(let text): return "q-\(text.hashValue)"
         case .list(let ordered, let items): return "l-\(ordered)-\(items.joined().hashValue)"
-        case .table(let headers, let rows): return "t-\(headers.joined())-\(rows.joined().hashValue)"
+        case .table(let headers, let rows): return "t-\(headers.joined())-\(rows.joined().joined().hashValue)"
         case .divider: return "d-\(UUID().uuidString)"
         }
     }

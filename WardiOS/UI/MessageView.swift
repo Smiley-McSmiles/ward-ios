@@ -189,7 +189,7 @@ struct MessageRow: View {
     private var isOnlyEmoji: Bool {
         let scalars = message.body.unicodeScalars
         guard !scalars.isEmpty else { return false }
-        return scalars.allSatisfy { $0.properties.isEmojiPresentation || $0.properties.isEmojiModifier || $0.isWhitespace || $0.value == 0x200D || $0.properties.isEmoji }
+        return scalars.allSatisfy { $0.properties.isEmojiPresentation || $0.properties.isEmojiModifier || $0.properties.isWhitespace || $0.value == 0x200D || $0.properties.isEmoji }
     }
 
     @ViewBuilder private var statusIcon: some View {
@@ -561,7 +561,7 @@ struct ImageViewer: View {
                 .offset(offset)
                 .gesture(
                     MagnificationGesture()
-                        .onChanged { zoom = max(1, min(5, $1)) }
+                        .onChanged { value in zoom = max(1, min(5, value)) }
                         .onEnded { _ in if zoom < 1.05 { withAnimation(.snappy) { zoom = 1 } } }
                 )
                 .simultaneousGesture(

@@ -169,92 +169,7 @@ struct ChatsView: View {
     var body: some View {
         ZStack {
             WardBackground()
-            List {
-                header
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-                if !app.requests.isEmpty || !requestChats.isEmpty {
-                    requestsRow
-                        .listRowBackground(Color.clear)
-                        .listRowSeparator(.hidden)
-                        .listRowInsets(EdgeInsets(top: 2, leading: 16, bottom: 4, trailing: 16))
-                }
-                if !refreshing && filtered.isEmpty && search.isEmpty && accountFilter == nil {
-                    EmptyStateView(icon: "bubble.left.and.bubble.right",
-                                   title: "No conversations yet",
-                                   subtitle: "Start a chat with a contact, join a group, or wait for someone to write to you.",
-                                   action: { showNewChat = true }, actionTitle: "New chat")
-                        .frame(minHeight: 380)
-                        .listRowBackground(Color.clear)
-                        .listRowSeparator(.hidden)
-                } else {
-                    ForEach(filtered) { chat in
-                        ChatRow(chat: chat,
-                                contact: app.contact(jid: chat.jid, accountId: chat.accountId),
-                                typing: app.typing[chat.id],
-                                account: app.account(id: chat.accountId))
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                Haptics.selection()
-                                app.selectChat(chat.id)
-                            }
-                            .contextMenu { menu(for: chat) }
-                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                Button(role: .destructive) { pendingDelete = chat } label: {
-                                    Label("Delete", systemImage: "trash")
-                                }
-                                Button { Task { await app.setArchived(chat, true) } } label: {
-                                    Label("Archive", systemImage: "archivebox")
-                                }
-                                .tint(.indigo)
-                            }
-                            .swipeActions(edge: .leading) {
-                                Button { Task { await app.setPinned(chat, !chat.pinned) } } label: {
-                                    Label(chat.pinned ? "Unpin" : "Pin", systemImage: chat.pinned ? "pin.slash" : "pin")
-                                }
-                                .tint(.orange)
-                                Button { Task { await app.setMuted(chat, chat.isMuted ? 0 : Date().addingTimeInterval(86400).millis) } } label: {
-                                    Label(chat.isMuted ? "Unmute" : "Mute", systemImage: chat.isMuted ? "bell" : "bell.slash")
-                                }
-                                .tint(.gray)
-                            }
-                            .listRowBackground(Color.clear)
-                            .listRowSeparator(.hidden)
-                            .listRowInsets(EdgeInsets(top: 3, leading: 12, bottom: 3, trailing: 12))
-                            .transition(.asymmetric(insertion: .move(edge: .top).combined(with: .opacity),
-                                                    removal: .opacity.combined(with: .scale(scale: 0.96))))
-                    }
-                }
-                if archivedCount > 0 && search.isEmpty {
-                    Button { showArchived = true } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: "archivebox.fill").foregroundStyle(palette.accent)
-                            Text("Archived").foregroundStyle(palette.text)
-                            Spacer()
-                            Text("\(archivedCount)").foregroundStyle(palette.secondaryText)
-                            Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(palette.tertiaryText)
-                        }
-                        .font(.subheadline.weight(.medium))
-                        .padding(.horizontal, 16).padding(.vertical, 14)
-                        .background(palette.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    }
-                    .buttonStyle(PressableStyle())
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-                    .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
-                }
-                Color.clear
-                    .frame(height: 70)
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-            }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-            .scrollIndicators(.hidden)
-            .refreshable { await refresh() }
-            .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .automatic), prompt: "Search chats")
-            .animation(.snappy(duration: 0.3), value: filtered.map(\.id))
+            chatList
         }
         .navigationTitle("Chats")
         .navigationBarTitleDisplayMode(.inline)
@@ -320,6 +235,107 @@ struct ChatsView: View {
         } message: {
             Text("The conversation will be removed from this device. Other people keep their copy.")
         }
+    }
+
+    private var chatList: some View {
+        List {
+            header
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+            if !app.requests.isEmpty || !requestChats.isEmpty {
+                requestsRow
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 2, leading: 16, bottom: 4, trailing: 16))
+            }
+            if !refreshing && filtered.isEmpty && search.isEmpty && accountFilter == nil {
+                emptyRow
+            } else {
+                ForEach(filtered) { chat in
+                    chatRow(chat)
+                }
+            }
+            if archivedCount > 0 && search.isEmpty {
+                archivedRow
+            }
+            Color.clear
+                .frame(height: 70)
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .scrollIndicators(.hidden)
+        .refreshable { await refresh() }
+        .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .automatic), prompt: "Search chats")
+        .animation(.snappy(duration: 0.3), value: filtered.map(\.id))
+    }
+
+    private var emptyRow: some View {
+        EmptyStateView(icon: "bubble.left.and.bubble.right",
+                       title: "No conversations yet",
+                       subtitle: "Start a chat with a contact, join a group, or wait for someone to write to you.",
+                       action: { showNewChat = true }, actionTitle: "New chat")
+            .frame(minHeight: 380)
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+    }
+
+    private var archivedRow: some View {
+        Button { showArchived = true } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "archivebox.fill").foregroundStyle(palette.accent)
+                Text("Archived").foregroundStyle(palette.text)
+                Spacer()
+                Text("\(archivedCount)").foregroundStyle(palette.secondaryText)
+                Image(systemName: "chevron.right").font(.caption.weight(.bold)).foregroundStyle(palette.tertiaryText)
+            }
+            .font(.subheadline.weight(.medium))
+            .padding(.horizontal, 16).padding(.vertical, 14)
+            .background(palette.surface, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+        .buttonStyle(PressableStyle())
+        .listRowBackground(Color.clear)
+        .listRowSeparator(.hidden)
+        .listRowInsets(EdgeInsets(top: 6, leading: 16, bottom: 6, trailing: 16))
+    }
+
+    private func chatRow(_ chat: Chat) -> some View {
+        ChatRow(chat: chat,
+                contact: app.contact(jid: chat.jid, accountId: chat.accountId),
+                typing: app.typing[chat.id],
+                account: app.account(id: chat.accountId))
+            .contentShape(Rectangle())
+            .onTapGesture {
+                Haptics.selection()
+                app.selectChat(chat.id)
+            }
+            .contextMenu { menu(for: chat) }
+            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                Button(role: .destructive) { pendingDelete = chat } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+                Button { Task { await app.setArchived(chat, true) } } label: {
+                    Label("Archive", systemImage: "archivebox")
+                }
+                .tint(.indigo)
+            }
+            .swipeActions(edge: .leading) {
+                Button { Task { await app.setPinned(chat, !chat.pinned) } } label: {
+                    Label(chat.pinned ? "Unpin" : "Pin", systemImage: chat.pinned ? "pin.slash" : "pin")
+                }
+                .tint(.orange)
+                Button { Task { await app.setMuted(chat, until: chat.isMuted ? 0 : Date().addingTimeInterval(86400).millis) } } label: {
+                    Label(chat.isMuted ? "Unmute" : "Mute", systemImage: chat.isMuted ? "bell" : "bell.slash")
+                }
+                .tint(.gray)
+            }
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+            .listRowInsets(EdgeInsets(top: 3, leading: 12, bottom: 3, trailing: 12))
+            .transition(.asymmetric(insertion: .move(edge: .top).combined(with: .opacity),
+                                    removal: .opacity.combined(with: .scale(scale: 0.96))))
     }
 
     private var header: some View {
@@ -411,7 +427,7 @@ struct ChatsView: View {
             Label(chat.pinned ? "Unpin" : "Pin", systemImage: chat.pinned ? "pin.slash" : "pin")
         }
         Button {
-            Task { await app.setMuted(chat, chat.isMuted ? 0 : Date().addingTimeInterval(86400).millis) }
+            Task { await app.setMuted(chat, until: chat.isMuted ? 0 : Date().addingTimeInterval(86400).millis) }
         } label: {
             Label(chat.isMuted ? "Unmute" : "Mute for a day", systemImage: chat.isMuted ? "bell" : "bell.slash")
         }

@@ -519,8 +519,7 @@ struct ForwardSheet: View {
                     dismiss()
                 } label: {
                     HStack(spacing: 12) {
-                        AvatarView(name: chat.displayName, jid: chat.jid, size: 38, group: chat.isGroup,
-                                   imagePath: chat.avatar)
+                        AvatarView(name: chat.displayName, jid: chat.jid, size: 38, imagePath: chat.avatar, group: chat.isGroup)
                         VStack(alignment: .leading, spacing: 1) {
                             Text(chat.displayName).font(.subheadline.weight(.medium)).foregroundStyle(palette.text)
                             Text(chat.preview).font(.caption).foregroundStyle(palette.secondaryText).lineLimit(1)
@@ -1009,7 +1008,7 @@ struct ArchivedChatsView: View {
                             Task { await app.setArchived(chat, false); app.selectChat(chat.id); dismiss() }
                         } label: {
                             HStack(spacing: 12) {
-                                AvatarView(name: chat.displayName, jid: chat.jid, size: 40, group: chat.isGroup, imagePath: chat.avatar)
+                                AvatarView(name: chat.displayName, jid: chat.jid, size: 40, imagePath: chat.avatar, group: chat.isGroup)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(chat.displayName).font(.subheadline.weight(.medium)).foregroundStyle(palette.text)
                                     Text(chat.preview).font(.caption).foregroundStyle(.secondary).lineLimit(1)

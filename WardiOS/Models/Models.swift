@@ -80,8 +80,9 @@ struct Contact: Codable, Identifiable, Hashable {
 // MARK: - Chat
 
 enum ChatType: String, Codable, CaseIterable { case chat, groupchat, pm }
-enum EncryptionMode: String, Codable, CaseIterable {
+enum EncryptionMode: String, Codable, CaseIterable, Identifiable {
     case `default`, omemo, pgp, off
+    var id: String { rawValue }
     var label: String {
         switch self {
         case .default: return "Default"
