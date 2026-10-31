@@ -57,12 +57,22 @@ reactions, server administration and an interface built around Apple's design la
 - **Same icon.** The iOS app icon and in-app logo are generated from Ward's original shield
   artwork. The README uses the vector original.
 
+## Screenshots
+
+| Chats | Conversation | Settings |
+| --- | --- | --- |
+| <img src="fastlane/screenshots/en-US/6.9-inch-chats.png" width="220"> | <img src="fastlane/screenshots/en-US/6.9-inch-conversation.png" width="220"> | <img src="fastlane/screenshots/en-US/6.9-inch-settings.png" width="220"> |
+
+These are generated from the real simulator build by the `Screenshots` workflow, using demo
+data. The same set includes 13-inch iPad screenshots for App Store Connect.
+
 ## Releasing
 
 The project is set up for App Store and TestFlight delivery: a privacy manifest, App Store
 metadata, fastlane lanes, a signed release workflow and simulator screenshot generation are
-included. See [RELEASING.md](RELEASING.md) for the end-to-end checklist and
-[docs/BUILD-SERVICES.md](docs/BUILD-SERVICES.md) for Mac build options.
+included. See [RELEASING.md](RELEASING.md) for the end-to-end checklist,
+[docs/BUILD-SERVICES.md](docs/BUILD-SERVICES.md) for Mac build options, and
+[docs/SIDELOADING.md](docs/SIDELOADING.md) for testing on a phone without the App Store.
 
 ## Encryption and privacy
 

@@ -14,6 +14,7 @@ struct AccountSettingsPage: View {
     @State private var tls = "auto"
     @State private var photo: PhotosPickerItem?
     @State private var showRemove = false
+    @State private var showServerDelete = false
     @State private var showPasswordInfo = false
 
     private var account: Account? { app.account(id: accountId) }
@@ -60,12 +61,25 @@ struct AccountSettingsPage: View {
             Text("Password changes are handled by your server. Change the password in your provider's account page, then add the account again here.")
         }
         .confirmationDialog("Remove this account?", isPresented: $showRemove, titleVisibility: .visible) {
-            Button("Remove account", role: .destructive) {
+            Button("Remove locally", role: .destructive) {
                 if let account { Task { await app.deleteAccount(account); dismiss() } }
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            Text("Local history, media and encryption state for this account will be deleted from this device.")
+            Text("Local history, media and encryption state for this account will be deleted from this device. Your account on the server is not changed.")
+        }
+        .confirmationDialog("Delete the account on the server?", isPresented: $showServerDelete, titleVisibility: .visible) {
+            Button("Delete account everywhere", role: .destructive) {
+                if let account {
+                    Task {
+                        if await app.deleteAccountOnServer(account) { dismiss() }
+                        else { app.showToast("The server did not allow account deletion. Remove it locally or contact your server administrator.", error: true) }
+                    }
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This asks the XMPP server to delete the account, then removes local history and keys. This cannot be undone.")
         }
     }
 
@@ -249,17 +263,30 @@ struct AccountSettingsPage: View {
     }
 
     private func removeCard(_ account: Account) -> some View {
-        Button { showRemove = true } label: {
-            HStack {
-                Image(systemName: "trash.fill").foregroundStyle(palette.danger)
-                Text("Remove account").foregroundStyle(palette.danger)
-                Spacer()
+        VStack(spacing: 8) {
+            Button { showRemove = true } label: {
+                HStack {
+                    Image(systemName: "iphone.slash").foregroundStyle(palette.danger)
+                    Text("Remove from this device").foregroundStyle(palette.danger)
+                    Spacer()
+                }
+                .padding(15)
+                .background(palette.danger.opacity(0.08), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(palette.danger.opacity(0.18), lineWidth: 0.5))
             }
-            .padding(15)
-            .background(palette.danger.opacity(0.08), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(palette.danger.opacity(0.18), lineWidth: 0.5))
+            .buttonStyle(PressableStyle())
+            Button { showServerDelete = true } label: {
+                HStack {
+                    Image(systemName: "trash.fill").foregroundStyle(palette.danger)
+                    Text("Delete account on server").foregroundStyle(palette.danger)
+                    Spacer()
+                }
+                .padding(15)
+                .background(palette.danger.opacity(0.08), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(palette.danger.opacity(0.18), lineWidth: 0.5))
+            }
+            .buttonStyle(PressableStyle())
         }
-        .buttonStyle(PressableStyle())
     }
 
     private func saveNickname(_ account: Account) {

@@ -132,6 +132,8 @@ under the 6.9-inch iPhone and 13-inch iPad slots. The demo data never connects t
 
 - **Privacy manifest:** `WardiOS/Resources/PrivacyInfo.xcprivacy` declares UserDefaults and file
   timestamp access, no tracking, and no collected data.
+- **Account deletion:** Settings → Account → Delete account on server uses XEP-0077 to remove
+  the account from the XMPP server, then clears the local database and Keychain items.
 - **App Privacy questionnaire:** Ward does not collect data on a developer-operated server. The
   XMPP provider processes data independently; select “Data Not Collected” for Ward itself and
   explain the provider relationship in the privacy policy.

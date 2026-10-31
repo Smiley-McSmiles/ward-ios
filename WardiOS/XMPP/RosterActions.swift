@@ -59,6 +59,12 @@ extension XMPPSession {
         try? await database.deleteRequest(accountId: accountId, jid: bare)
     }
 
+    func deleteServerAccount() async -> Bool {
+        guard isOnline else { return false }
+        guard let result = await iqRequest("<query xmlns='jabber:iq:register'><remove/></query>", type: "set", timeout: 25) else { return false }
+        return result.attr("type") != "error"
+    }
+
     func renameContact(_ jid: String, name: String) async {
         let bare = JID.bare(jid)
         if var contact = roster[bare] {

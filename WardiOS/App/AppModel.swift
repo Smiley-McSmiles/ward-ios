@@ -77,6 +77,18 @@ final class AppModel: ObservableObject {
         bob.previewSender = "You"
         chats = [alice, group, bob]
         let aliceMessages = [
+            Message(id: 6, chatId: 1, stanzaId: "d6", originId: "d6", sender: "alice@example.org",
+                    senderJid: "alice@example.org", senderName: "Alice", direction: 0,
+                    timestamp: now - 4_400_000, body: "Morning! The forecast says clear skies all day.", status: 0),
+            Message(id: 7, chatId: 1, stanzaId: "d7", originId: "d7", sender: "alex@example.org",
+                    senderJid: "alex@example.org", senderName: "Alex", direction: 1,
+                    timestamp: now - 4_200_000, body: "Perfect. I’ll bring coffee and the map.", status: 3),
+            Message(id: 8, chatId: 1, stanzaId: "d8", originId: "d8", sender: "alice@example.org",
+                    senderJid: "alice@example.org", senderName: "Alice", direction: 0,
+                    timestamp: now - 4_000_000, body: "You’re a legend ☕", status: 0),
+            Message(id: 9, chatId: 1, stanzaId: "d9", originId: "d9", sender: "alice@example.org",
+                    senderJid: "alice@example.org", senderName: "Alice", direction: 0,
+                    timestamp: now - 3_800_000, body: "Meet at the north car park at 8?", status: 0),
             Message(id: 10, chatId: 1, stanzaId: "d10", originId: "d10", sender: "alice@example.org",
                     senderJid: "alice@example.org", senderName: "Alice", direction: 0,
                     timestamp: now - 3_600_000, body: "Hey! Are we still doing the ridge trail on Saturday?",
@@ -289,6 +301,13 @@ final class AppModel: ObservableObject {
         contacts.removeAll { $0.accountId == account.id }
         chats.removeAll { $0.accountId == account.id }
         sessions.removeValue(forKey: account.id)
+    }
+
+    func deleteAccountOnServer(_ account: Account) async -> Bool {
+        guard let session = sessions[account.id] else { return false }
+        let removed = await session.deleteServerAccount()
+        if removed { await deleteAccount(account) }
+        return removed
     }
 
     func updateAccount(_ account: Account) async {
