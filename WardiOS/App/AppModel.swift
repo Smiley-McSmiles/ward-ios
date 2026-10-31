@@ -50,7 +50,6 @@ final class AppModel: ObservableObject {
                 database = try WardDatabase(url: url)
                 await reloadAll()
                 isReady = true
-                NotificationManager.shared.requestAuthorization()
                 for account in accounts where account.enabled {
                     connect(account)
                 }
@@ -187,6 +186,7 @@ final class AppModel: ObservableObject {
         passwords[account.id] = password
         if remember { SecureStore.shared.set(password, for: "password.\(jid)") }
         connect(account)
+        NotificationManager.shared.requestAuthorization()
         return account
     }
 

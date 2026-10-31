@@ -49,6 +49,8 @@ jobs:
           xcrun simctl boot "$DEVICE" || true
           xcrun simctl bootstatus "$DEVICE" -b
           xcrun simctl install "$DEVICE" build/Build/Products/Debug-iphonesimulator/Ward.app
+          xcrun simctl privacy "$DEVICE" grant notifications org.ward.ios || true
+          xcrun simctl status_bar "$DEVICE" override --time "9:41" --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4 || true
           xcrun simctl launch "$DEVICE" org.ward.ios > launch.log 2>&1 || true
           sleep 6
           xcrun simctl io "$DEVICE" screenshot welcome.png
