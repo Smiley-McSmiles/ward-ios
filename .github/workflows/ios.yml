@@ -42,7 +42,8 @@ jobs:
       - name: Capture App Store screenshots
         if: success()
         continue-on-error: true
-        run: ./scripts/screenshots.sh
+        timeout-minutes: 12
+        run: timeout 660 ./scripts/screenshots.sh
       - name: Upload screenshots
         if: success()
         continue-on-error: true

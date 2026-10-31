@@ -16,8 +16,12 @@ pick_device() {
 capture() {
   local device="$1"
   local prefix="$2"
+  if ! xcrun simctl list devices available | grep -q "$device ("; then
+    echo "Skipping unavailable simulator: $device"
+    return
+  fi
   xcrun simctl boot "$device" 2>/dev/null || true
-  xcrun simctl bootstatus "$device" -b
+  timeout 180 xcrun simctl bootstatus "$device" -b
   xcrun simctl install "$device" "$APP"
   xcrun simctl privacy "$device" grant notifications org.ward.ios 2>/dev/null || true
   xcrun simctl status_bar "$device" override --time "9:41" --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4 2>/dev/null || true
