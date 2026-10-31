@@ -43,7 +43,7 @@ jobs:
         if: success()
         continue-on-error: true
         timeout-minutes: 12
-        run: timeout 660 ./scripts/screenshots.sh
+        run: ./scripts/screenshots.sh
       - name: Upload screenshots
         if: success()
         continue-on-error: true

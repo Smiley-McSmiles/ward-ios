@@ -21,7 +21,7 @@ capture() {
     return
   fi
   xcrun simctl boot "$device" 2>/dev/null || true
-  timeout 180 xcrun simctl bootstatus "$device" -b
+  xcrun simctl bootstatus "$device" -b
   xcrun simctl install "$device" "$APP"
   xcrun simctl privacy "$device" grant notifications org.ward.ios 2>/dev/null || true
   xcrun simctl status_bar "$device" override --time "9:41" --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4 2>/dev/null || true
