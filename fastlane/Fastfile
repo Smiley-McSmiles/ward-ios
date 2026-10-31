@@ -16,7 +16,7 @@ platform :ios do
       configuration: "Release",
       output_directory: "build/fastlane",
       output_name: "Ward.ipa",
-      export_method: "app-store-connect",
+      export_method: "app-store",
       export_options: "ExportOptions.plist",
       xcargs: "-allowProvisioningUpdates DEVELOPMENT_TEAM=#{ENV.fetch('DEVELOPMENT_TEAM')}"
     )
@@ -43,7 +43,7 @@ platform :ios do
       configuration: "Release",
       output_directory: "build/fastlane",
       output_name: "Ward.ipa",
-      export_method: "app-store-connect",
+      export_method: "app-store",
       export_options: "ExportOptions.plist",
       xcargs: "-allowProvisioningUpdates DEVELOPMENT_TEAM=#{ENV.fetch('DEVELOPMENT_TEAM')}"
     )
