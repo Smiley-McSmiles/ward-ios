@@ -80,8 +80,8 @@
 		BB993158B0952A847BAB11BE /* Transport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Transport.swift; sourceTree = "<group>"; };
 		B00218558C6DF042A15686C5 /* XML.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XML.swift; sourceTree = "<group>"; };
 		B887E3F984A89D6138F0305A /* XMPPConnection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XMPPConnection.swift; sourceTree = "<group>"; };
-		B1F339D4350D81023A43676A /* XMPPSession+MUC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XMPPSession+MUC.swift; sourceTree = "<group>"; };
-		B3846E1B49FE035031CC7538 /* XMPPSession+Messages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XMPPSession+Messages.swift; sourceTree = "<group>"; };
+		B1F339D4350D81023A43676A /* XMPPSession+MUC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "XMPPSession+MUC.swift"; sourceTree = "<group>"; };
+		B3846E1B49FE035031CC7538 /* XMPPSession+Messages.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "XMPPSession+Messages.swift"; sourceTree = "<group>"; };
 		B4C69850B914F67CF3060FEA /* XMPPSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XMPPSession.swift; sourceTree = "<group>"; };
 		B117879497CD074B40DEF59E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BF266AA7F5759197ED3896F5 /* ringtone.m4a */ = {isa = PBXFileReference; lastKnownFileType = audio.m4a; path = ringtone.m4a; sourceTree = "<group>"; };
