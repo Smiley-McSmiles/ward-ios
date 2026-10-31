@@ -156,10 +156,10 @@ and preserves full-text search without exposing a second schema to every screen.
 ## Status
 
 The simulator build is exercised by the GitHub Actions `iOS` workflow on every push, including
-launching the app in the simulator. The app is usable for plaintext one-to-one and group XMPP
-messaging, files, voice notes, administration and daily extras. OMEMO/OpenPGP, WebRTC call
-media and encrypted uploads are the remaining parity work; [PARITY.md](PARITY.md) tracks the
-full matrix.
+launching the app in the simulator and generating App Store screenshots from demo data. The app
+is usable for plaintext one-to-one and group XMPP messaging, files, voice notes, administration
+and daily extras. OMEMO/OpenPGP, WebRTC call media and encrypted uploads are the remaining parity
+work; [PARITY.md](PARITY.md) tracks the full matrix.
 
 ## Contributing
 

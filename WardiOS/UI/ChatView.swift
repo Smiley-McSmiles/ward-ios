@@ -279,6 +279,7 @@ struct ChatView: View {
         } message: {
             Text("Allow microphone access in Settings to record voice messages.")
         }
+        .toolbar(.hidden, for: .tabBar)
     }
 
     private func send() {

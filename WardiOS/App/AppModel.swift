@@ -41,7 +41,7 @@ final class AppModel: ObservableObject {
 
     private func loadDemoData() {
         let now = Date().millis
-        let account = Account(id: 1, jid: "you@example.org", label: "You", color: "#3584E4",
+        let account = Account(id: 1, jid: "alex@example.org", label: "", color: "#3584E4",
                               nickname: "Alex", createdAt: now)
         accounts = [account]
         states = [1: ConnectionState(state: "online", step: "Online", since: Date())]
@@ -82,7 +82,7 @@ final class AppModel: ObservableObject {
                     timestamp: now - 3_600_000, body: "Hey! Are we still doing the ridge trail on Saturday?",
                     status: 0),
             Message(id: 11, chatId: 1, stanzaId: "d11", originId: "d11",
-                    sender: "you@example.org", senderJid: "you@example.org", senderName: "You",
+                    sender: "alex@example.org", senderJid: "alex@example.org", senderName: "Alex",
                     direction: 1, timestamp: now - 3_400_000,
                     body: "Yes — weather looks **great**. I’ll bring the map.", isMarkdown: true, status: 3),
             Message(id: 12, chatId: 1, stanzaId: "d12", originId: "d12", sender: "alice@example.org",
@@ -90,7 +90,7 @@ final class AppModel: ObservableObject {
                     timestamp: now - 180_000, body: "The trail map looks perfect", status: 0,
                     reactions: [Reaction(emoji: ["❤️"], who: "You", mine: true)]),
             Message(id: 13, chatId: 1, stanzaId: "d13", originId: "d13",
-                    sender: "you@example.org", senderJid: "you@example.org", senderName: "You",
+                    sender: "alex@example.org", senderJid: "alex@example.org", senderName: "Alex",
                     direction: 1, timestamp: now - 60_000, body: "See you at 8!", status: 1)
         ]
         let groupMessages = [
@@ -115,7 +115,7 @@ final class AppModel: ObservableObject {
                     senderJid: "bob@example.org", senderName: "Bob", direction: 0,
                     timestamp: now - 4_000_000, body: "Friday still works for the demo?", status: 0),
             Message(id: 31, chatId: 3, stanzaId: "d31", originId: "d31",
-                    sender: "you@example.org", senderJid: "you@example.org", senderName: "You",
+                    sender: "alex@example.org", senderJid: "alex@example.org", senderName: "Alex",
                     direction: 1, timestamp: now - 3_600_000, body: "Sounds good, see you Friday", status: 2)
         ]
         messages = [1: aliceMessages, 2: groupMessages, 3: bobMessages]
