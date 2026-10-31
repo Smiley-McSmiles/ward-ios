@@ -461,15 +461,18 @@ extension XMPPSession {
             return
         }
         var message = original
-        if chat.encryptionMode == .omemo || chat.encryptionMode == .pgp {
+        let defaultMode = settings.string("encryption.default", "off")
+        let needsEncryption = chat.encryptionMode == .omemo || chat.encryptionMode == .pgp
+            || (chat.encryptionMode == .default && defaultMode == "always")
+        if needsEncryption {
             message.status = -1
-            message.error = "This build of Ward for iOS cannot encrypt with OMEMO or OpenPGP yet."
+            message.error = "This build of Ward for iOS cannot encrypt with OMEMO or OpenPGP yet. Set this chat to Off in chat details to send unencrypted."
             try? await database.updateMessage(message)
             onMessageChanged?(message)
             onToast?(message.error, true)
             return
         }
-        if chat.encryptionMode == .default && settings.string("encryption.default", "always") != "off" && !warnedAboutEncryption {
+        if chat.encryptionMode == .default && defaultMode == "available" && !warnedAboutEncryption {
             warnedAboutEncryption = true
             onToast?("OMEMO is not available in this build. This chat is being sent unencrypted.", true)
         }

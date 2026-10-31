@@ -386,6 +386,10 @@ final class AppModel: ObservableObject {
     func messages(for chatId: Int64) -> [Message] { messages[chatId] ?? [] }
 
     func selectChat(_ id: Int64?) {
+        if selectedChatId == id, let id, messages[id] != nil {
+            if let chat = chat(id: id) { sessions[chat.accountId]?.setActiveChat(id) }
+            return
+        }
         selectedChatId = id
         for session in sessions.values {
             session.setActiveChat(nil)
@@ -599,6 +603,25 @@ final class AppModel: ObservableObject {
     func setMuted(_ chat: Chat, until: Int64) async { await update(chat) { $0.mutedUntil = until } }
     func setArchived(_ chat: Chat, _ value: Bool) async { await update(chat) { $0.archived = value } }
     func setEncryption(_ chat: Chat, _ value: EncryptionMode) async { await update(chat) { $0.encryption = value.rawValue } }
+
+    /// The mode the UI should show for a chat. A default chat uses the account-wide setting; this
+    /// build treats "always" as required-but-unavailable rather than silently falling back.
+    func effectiveEncryption(_ chat: Chat) -> EncryptionMode {
+        if chat.encryptionMode != .default { return chat.encryptionMode }
+        switch settings.string("encryption.default", "off") {
+        case "always": return .omemo
+        case "available": return .off
+        default: return .off
+        }
+    }
+
+    func catchUpHistory(accountId: Int64? = nil) async {
+        if let accountId, let session = sessions[accountId] {
+            await session.syncRecentArchive()
+            return
+        }
+        for session in sessions.values { await session.syncRecentArchive() }
+    }
     func setNotify(_ chat: Chat, _ value: String) async { await update(chat) { $0.notify = value } }
 
     private func update(_ chat: Chat, _ change: (inout Chat) -> Void) async {

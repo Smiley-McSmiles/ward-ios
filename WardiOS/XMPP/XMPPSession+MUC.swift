@@ -277,36 +277,109 @@ extension XMPPSession {
 // MARK: - MAM
 
 extension XMPPSession {
-    private func mamQuery(with jid: String?, max: Int, reverse: Bool = true) -> String {
+    private func mamQuery(with jid: String?, max: Int, reverse: Bool = true,
+                          after: String? = nil, before: String? = nil, start: Date? = nil) -> String {
         var fields = "<field var='FORM_TYPE' type='hidden'><value>\(NS.mam)</value></field>"
         if let jid { fields += "<field var='with'><value>\(XML.escape(jid))</value></field>" }
-        let order = reverse ? "<reverse/>" : ""
+        if let start {
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime]
+            fields += "<field var='start'><value>\(formatter.string(from: start))</value></field>"
+        }
+        var rsm = "<max>\(max)</max>"
+        if let after { rsm += "<after>\(XML.escape(after))</after>" }
+        if let before { rsm += "<before>\(XML.escape(before))</before>" }
+        if reverse { rsm += "<reverse/>" }
         return """
-        <query xmlns='\(NS.mam)' queryid='ward-\(String.wardID())'><x xmlns='\(NS.data)' type='submit'>\(fields)</x><set xmlns='\(NS.rsm)'><max>\(max)</max>\(order)</set></query>
+        <query xmlns='\(NS.mam)' queryid='ward-\(String.wardID())'><x xmlns='\(NS.data)' type='submit'>\(fields)</x><set xmlns='\(NS.rsm)'>\(rsm)</set></query>
         """
     }
 
-    func syncRecentArchive() async {
-        _ = await iqRequest(mamQuery(with: nil, max: 200), timeout: 35)
+    private func mamSet(_ result: XMLNode) -> (first: String?, last: String?, complete: Bool)? {
+        guard let fin = result.child("fin", xmlns: NS.mam) else { return nil }
+        let set = fin.child("set", xmlns: NS.rsm)
+        return (set?.child("first")?.trimmedText, set?.child("last")?.trimmedText,
+                fin.attr("complete", "false") == "true")
     }
 
-    func syncChat(_ chat: Chat) async {
-        if chat.isGroup {
-            _ = await iqRequest(mamQuery(with: nil, max: 100), to: chat.jid, timeout: 35)
-        } else {
-            _ = await iqRequest(mamQuery(with: chat.jid, max: 100), timeout: 35)
+    /// Catch up from the last successful archive sync. The cursor is persisted per account so a
+    /// reconnect does not skip messages that arrived while the app was closed. If a server rejects
+    /// an old cursor, fall back to a seven-day window once instead of failing forever.
+    func syncRecentArchive() async {
+        let defaults = UserDefaults.standard
+        let syncKey = "ward.mam.since.\(accountId)"
+        let uidKey = "ward.mam.uid.\(accountId)"
+        let now = Date()
+        let lastSync = defaults.double(forKey: syncKey)
+        let fallbackStart = now.addingTimeInterval(-7 * 86_400)
+        var after = defaults.string(forKey: uidKey)
+        var start: Date? = after == nil ? (lastSync > 0 ? Date(timeIntervalSince1970: lastSync - 2) : fallbackStart) : nil
+        var lastUID: String? = after
+        var completed = false
+
+        for page in 0..<20 {
+            let query = mamQuery(with: nil, max: 200, reverse: false, after: after, start: page == 0 ? start : nil)
+            guard let result = await iqRequest(query, timeout: 40) else {
+                if after != nil && page == 0 {
+                    // A stale cursor from a previous archive should not block the whole account.
+                    after = nil
+                    start = fallbackStart
+                    lastUID = nil
+                    continue
+                }
+                return
+            }
+            if result.attr("type") == "error" && after != nil && page == 0 {
+                after = nil
+                start = fallbackStart
+                lastUID = nil
+                continue
+            }
+            guard let set = mamSet(result) else { return }
+            if let last = set.last, !last.isEmpty { lastUID = last }
+            if set.complete { completed = true; break }
+            guard let last = set.last, !last.isEmpty, last != after else { break }
+            after = last
+            start = nil
         }
+        if completed || lastUID != nil {
+            defaults.set(now.timeIntervalSince1970, forKey: syncKey)
+            if let lastUID { defaults.set(lastUID, forKey: uidKey) }
+        }
+    }
+
+    /// Fetch recent pages for one chat, walking backwards so a manual re-sync can fill gaps.
+    @discardableResult
+    func syncChat(_ chat: Chat, pages: Int = 4) async -> Int {
+        var before: String?
+        var fetched = 0
+        for _ in 0..<max(1, pages) {
+            let query = mamQuery(with: chat.isGroup ? nil : chat.jid, max: 100, reverse: true, before: before)
+            let result: XMLNode?
+            if chat.isGroup {
+                result = await iqRequest(query, to: chat.jid, timeout: 40)
+            } else {
+                result = await iqRequest(query, timeout: 40)
+            }
+            guard let result, let set = mamSet(result) else { break }
+            fetched += 1
+            guard let first = set.first, !first.isEmpty, first != before else { break }
+            before = first
+            if set.complete { break }
+        }
+        return fetched
     }
 
     func resyncAll() async -> String {
         let chats = ((try? await database.chats()) ?? []).filter { $0.accountId == accountId && $0.open }
         guard !chats.isEmpty else { return "No chats to re-sync." }
         var count = 0
+        var pages = 0
         for chat in chats {
-            await syncChat(chat)
-            count += 1
+            let fetched = await syncChat(chat, pages: 10)
+            if fetched > 0 { count += 1; pages += fetched }
         }
-        return "Re-synced \(count) chat\(count == 1 ? "" : "s")."
+        return "Re-synced \(count) chat\(count == 1 ? "" : "s") (\(pages) page\(pages == 1 ? "" : "s"))."
     }
 }
 

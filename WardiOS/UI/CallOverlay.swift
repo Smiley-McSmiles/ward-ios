@@ -260,7 +260,7 @@ struct AppUnlockView: View {
                 HStack(spacing: 14) {
                     ForEach(row, id: \.self) { key in
                         if key.isEmpty {
-                            Color.clear.frame(width: 70, height: 62)
+                            Color.clear.frame(width: 64, height: 64)
                         } else if key == "delete" {
                             Button {
                                 if !passcode.isEmpty { passcode.removeLast() }
@@ -268,7 +268,7 @@ struct AppUnlockView: View {
                             } label: {
                                 Image(systemName: "delete.left").font(.system(size: 19))
                                     .foregroundStyle(palette.secondaryText)
-                                    .frame(width: 70, height: 62)
+                                    .frame(width: 64, height: 64)
                             }
                             .buttonStyle(.plain)
                         } else {
@@ -279,7 +279,7 @@ struct AppUnlockView: View {
                             } label: {
                                 Text(key).font(.system(size: 25, weight: .medium, design: .rounded))
                                     .foregroundStyle(palette.text)
-                                    .frame(width: 70, height: 62)
+                                    .frame(width: 64, height: 64)
                                     .background(palette.surface.opacity(0.7), in: Circle())
                                     .overlay(Circle().strokeBorder(palette.outline.opacity(0.3), lineWidth: 0.5))
                             }

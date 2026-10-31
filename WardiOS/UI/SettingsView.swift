@@ -33,6 +33,8 @@ struct SettingsView: View {
                     footer
                 }
                 .padding(.horizontal, 16)
+                .frame(maxWidth: 820)
+                .frame(maxWidth: .infinity)
                 .padding(.bottom, 100)
             }
             .scrollIndicators(.hidden)
@@ -281,6 +283,15 @@ struct SettingsPageView: View {
                         }
                     }
                     }
+                    if pageKey == "encryption" {
+                        HStack(alignment: .top, spacing: 9) {
+                            Image(systemName: "exclamationmark.shield.fill").foregroundStyle(palette.warning)
+                            Text("OMEMO and OpenPGP message encryption are not wired in this release. Explicitly encrypted chats are blocked rather than sent in plaintext.")
+                                .font(.caption).foregroundStyle(palette.secondaryText)
+                        }
+                        .padding(12)
+                        .background(palette.warning.opacity(0.08), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    }
                     if pageKey == "accounts" { accountsLinks }
                     if pageKey == "advanced" { advancedActions }
                     if pageKey == "security" { SecurityEmbedded() }
@@ -288,6 +299,8 @@ struct SettingsPageView: View {
                     Spacer(minLength: 40)
                 }
                 .padding(.horizontal, 16)
+                .frame(maxWidth: 820)
+                .frame(maxWidth: .infinity)
                 .padding(.top, 8)
             }
         }

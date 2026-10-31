@@ -110,7 +110,8 @@ struct ChatDetailsSheet: View {
                     Button {
                         Task { await app.setEncryption(current, mode) }
                     } label: {
-                        Label(mode.label, systemImage: current.encryptionMode == mode ? "checkmark" : "")
+                        Label(mode == .omemo || mode == .pgp ? "\(mode.label) (not available)" : mode.label,
+                              systemImage: current.encryptionMode == mode ? "checkmark" : "")
                     }
                 }
             } label: {

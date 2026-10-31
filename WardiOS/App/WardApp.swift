@@ -111,6 +111,10 @@ struct RootView: View {
             if let id = note.userInfo?["chatId"] as? Int64 { app.selectChat(id) } else if let id = note.userInfo?["chatId"] as? Int { app.selectChat(Int64(id)) }
         }
         .onOpenURL { url in app.handleURL(url) }
+        .onChange(of: app.isReady) { _, ready in
+            if ready { consumePendingChat() }
+        }
+        .onAppear { consumePendingChat() }
         .task {
             screenCaptured = UIScreen.main.isCaptured && app.settings.bool("security.block_screenshots")
         }
@@ -123,6 +127,13 @@ struct RootView: View {
         case "dark": return .dark
         default: return nil
         }
+    }
+
+    private func consumePendingChat() {
+        guard !app.accounts.isEmpty,
+              let raw = UserDefaults.standard.object(forKey: "ward.pendingChat") as? Int else { return }
+        UserDefaults.standard.removeObject(forKey: "ward.pendingChat")
+        app.selectChat(Int64(raw))
     }
 
     private func startupError(_ message: String) -> some View {

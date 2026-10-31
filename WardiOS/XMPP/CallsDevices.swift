@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 
 // MARK: - Calls (Jingle Message Initiation signalling)
 
@@ -159,7 +160,22 @@ extension XMPPSession {
                 }
             }
         }
+        for index in devices.indices where devices[index].protocolName == "omemo2" && devices[index].fingerprint.isEmpty {
+            if let fingerprint = await fetchBundleFingerprint(jid: devices[index].jid, deviceId: devices[index].deviceId) {
+                devices[index].fingerprint = fingerprint
+                try? await database.saveDevice(devices[index])
+            }
+        }
         onDevicesChanged?(jid)
+    }
+
+    private func fetchBundleFingerprint(jid: String, deviceId: Int64) async -> String? {
+        let xml = "<pubsub xmlns='http://jabber.org/protocol/pubsub'><items node='\(NS.omemo2):bundles'><item id='\(deviceId)'/></items></pubsub>"
+        guard let result = await iqRequest(xml, to: JID.bare(jid), timeout: 15),
+              let bundle = result.child("pubsub")?.child("items")?.children("item").first?.child("bundle", xmlns: NS.omemo2),
+              let encoded = bundle.child("ik")?.trimmedText,
+              let data = Data(base64Encoded: encoded) else { return nil }
+        return SHA256.hash(data: data).map { String(format: "%02x", $0) }.joined()
     }
 
     func trustDevice(jid: String, deviceId: Int64, fingerprint: String, trusted: Bool, protocolName: String = "omemo2") async {

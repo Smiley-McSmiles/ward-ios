@@ -31,6 +31,8 @@ struct ServerView: View {
                     Spacer(minLength: 90)
                 }
                 .padding(.horizontal, 16)
+                .frame(maxWidth: 900)
+                .frame(maxWidth: .infinity)
             }
             .scrollIndicators(.hidden)
             .refreshable { await app.loadCommands() }

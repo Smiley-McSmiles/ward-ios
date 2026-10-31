@@ -444,10 +444,10 @@ struct ChatsView: View {
     private func refresh() async {
         refreshing = true
         for account in app.accounts {
-            _ = await app.resyncHistory(accountId: account.id)
+            await app.catchUpHistory(accountId: account.id)
         }
         refreshing = false
-        app.showToast("History re-synced.")
+        app.showToast("Messages caught up from the server.")
     }
 }
 
@@ -685,6 +685,8 @@ struct ContactsView: View {
                     }
                     Spacer(minLength: 90)
                 }
+                .frame(maxWidth: 900)
+                .frame(maxWidth: .infinity)
             }
             .scrollIndicators(.hidden)
             .searchable(text: $search, prompt: "Search contacts")

@@ -475,8 +475,7 @@ final class XMPPSession {
         guard var current = try? await database.chat(id: chat.id) else { return }
         current.unread = 0
         current.mentions = 0
-        let messages = (try? await database.messages(chatId: current.id, limit: 600)) ?? []
-        if let last = messages.last(where: { !$0.isOutgoing }) {
+        if let last = try? await database.lastIncoming(chatId: current.id), last.id > current.lastReadId {
             current.lastReadId = last.id
             sendDisplayed(chat: current, message: last)
             sendReceipt(chat: current, stanzaId: last.stanzaId)

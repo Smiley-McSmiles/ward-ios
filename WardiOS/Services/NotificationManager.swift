@@ -100,6 +100,7 @@ final class WardAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
                                 withCompletionHandler completionHandler: @escaping () -> Void) {
         let info = response.notification.request.content.userInfo
         if let chatId = info["chatId"] as? Int {
+            UserDefaults.standard.set(chatId, forKey: "ward.pendingChat")
             NotificationCenter.default.post(name: .wardOpenChat, object: nil, userInfo: ["chatId": Int64(chatId)])
         }
         if response.actionIdentifier == "REPLY",

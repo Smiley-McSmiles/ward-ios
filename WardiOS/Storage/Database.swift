@@ -296,6 +296,10 @@ actor WardDatabase {
         try query("SELECT json FROM messages WHERE id=?", [id]) { decode(Message.self, $0) }.first
     }
 
+    func lastIncoming(chatId: Int64) throws -> Message? {
+        try query("SELECT json FROM messages WHERE chatId=? AND direction=0 ORDER BY timestamp DESC, id DESC LIMIT 1", [chatId]) { decode(Message.self, $0) }.first
+    }
+
     func lastMessage(chatId: Int64) throws -> Message? {
         try query("SELECT json FROM messages WHERE chatId=? ORDER BY timestamp DESC, id DESC LIMIT 1", [chatId]) { decode(Message.self, $0) }.first
     }

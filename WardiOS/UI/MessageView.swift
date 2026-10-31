@@ -250,6 +250,7 @@ struct MessageRow: View {
             }
         }
         .padding(.horizontal, 4)
+        .animation(.snappy(duration: 0.25), value: message.reactions)
     }
 
     @ViewBuilder private var contextMenu: some View {

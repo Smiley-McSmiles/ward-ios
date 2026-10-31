@@ -137,7 +137,7 @@ enum SettingsSchema {
         b("notify.sounds", "Notification sounds", "Play a sound for new messages outside quiet hours", "notifications", "Sounds", true),
 
         // Encryption
-        c("encryption.default", "Default encryption", "Used for new chats; each chat can override it", "encryption", "Encryption", "always",
+        c("encryption.default", "Default encryption", "Used for new chats; each chat can override it. This build does not yet implement OMEMO", "encryption", "Encryption", "off",
           [("always", "Always (recommended)"), ("available", "When available"), ("off", "Off")]),
         c("encryption.trust", "Trust new devices", "What Ward does the first time a contact adds a device", "encryption", "Encryption", "btbv",
           [("btbv", "Blind trust before verification"), ("manual", "Ask every time")]),

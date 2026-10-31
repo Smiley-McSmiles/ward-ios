@@ -89,6 +89,10 @@ struct ChatView: View {
                         }
                         .padding(.top, 8)
                         .padding(.bottom, 8)
+                        .frame(maxWidth: 860)
+                        .frame(maxWidth: .infinity)
+                        .animation(app.settings.bool("appearance.message_animations") ? .spring(response: 0.42, dampingFraction: 0.84) : nil,
+                                   value: messages.map(\.id))
                     }
                     .scrollIndicators(.hidden)
                     .scrollDismissesKeyboard(.interactively)
@@ -100,7 +104,9 @@ struct ChatView: View {
                                 proxy.scrollTo("bottom", anchor: .bottom)
                             }
                         }
-                        Task { await app.markRead(chat: chat) }
+                        if messages.last?.isOutgoing == false {
+                            Task { await app.markRead(chat: chat) }
+                        }
                     }
                     .onChange(of: app.typing[chat.id]) { _, value in
                         if value != nil && atBottom {
@@ -151,7 +157,12 @@ struct ChatView: View {
                                     } else {
                                         Text(WardFormat.presence(contact, state: sessionState))
                                     }
-                                    if chat.encryptionMode == .omemo || chat.encryptionMode == .pgp {
+                                    if app.effectiveEncryption(chat) == .off {
+                                        Image(systemName: "lock.open.fill")
+                                            .font(.system(size: 8))
+                                            .foregroundStyle(palette.warning)
+                                            .accessibilityLabel("Unencrypted")
+                                    } else if app.effectiveEncryption(chat) != .off {
                                         Image(systemName: "lock.fill").font(.system(size: 7))
                                     }
                                 }
@@ -165,11 +176,15 @@ struct ChatView: View {
             }
             ToolbarItem(placement: .topBarTrailing) {
                 if chat?.isGroup == false {
-                    Button { if let chat { app.startCall(chat, video: false) } } label: {
+                    Menu {
+                        Button { if let chat { app.startCall(chat, video: false) } } label: {
+                            Label("Audio call", systemImage: "phone")
+                        }
+                        Button { if let chat { app.startCall(chat, video: true) } } label: {
+                            Label("Video call", systemImage: "video")
+                        }
+                    } label: {
                         Image(systemName: "phone")
-                    }
-                    Button { if let chat { app.startCall(chat, video: true) } } label: {
-                        Image(systemName: "video")
                     }
                 }
                 Button { showSearch = true } label: { Image(systemName: "magnifyingglass") }
@@ -184,12 +199,13 @@ struct ChatView: View {
                              onRecordingError: { recordingError = true },
                              onSendVoice: { url, duration in app.sendVoice(url, duration: duration) },
                              onSchedule: { showSchedule = true })
+                    .frame(maxWidth: 860)
+                    .frame(maxWidth: .infinity)
                     .background(.ultraThinMaterial)
             }
         }
         .task {
             app.selectChat(chatId)
-            await app.loadMessages(chatId: chatId)
             if let chat { await app.markRead(chat: chat) }
         }
         .onDisappear {
