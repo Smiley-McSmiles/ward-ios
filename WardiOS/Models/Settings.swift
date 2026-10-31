@@ -165,7 +165,6 @@ enum SettingsSchema {
     static func specs(page: String) -> [SettingSpec] { specs.filter { $0.page == page } }
 }
 
-@MainActor
 final class SettingsStore: ObservableObject {
     @Published private(set) var values: [String: String]
     private let defaults = UserDefaults.standard

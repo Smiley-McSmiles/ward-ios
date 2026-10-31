@@ -164,12 +164,8 @@ struct WardThemeModifier: ViewModifier {
     @Environment(\.colorScheme) private var systemScheme
 
     func body(content: Content) -> some View {
-        let dark: Bool
-        switch settings.string("appearance.style", "system") {
-        case "dark": dark = true
-        case "light": dark = false
-        default: dark = systemScheme == .dark
-        }
+        let style = settings.string("appearance.style", "system")
+        let dark = style == "dark" ? true : (style == "light" ? false : systemScheme == .dark)
         let palette = WardPalette(accentName: settings.accentName, dark: dark)
         content
             .environment(\.ward, palette)

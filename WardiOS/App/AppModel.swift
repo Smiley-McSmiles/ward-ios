@@ -395,7 +395,7 @@ final class AppModel: ObservableObject {
             list.removeAll { $0.id == message.id }
             messages[message.chatId] = list
         }
-        if let chat = chat(id: message.chatId) { await reloadChats() }
+        if self.chat(id: message.chatId) != nil { await reloadChats() }
     }
 
     private func resumeScheduledMessages() async {
