@@ -11,10 +11,10 @@ struct WardApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
+                .wardTheme()
                 .environmentObject(app)
                 .environmentObject(app.settings)
                 .environmentObject(lock)
-                .wardTheme()
                 .onAppear {
                     app.start()
                     WardAppDelegate.replyHandler = { [weak app] chatId, text in

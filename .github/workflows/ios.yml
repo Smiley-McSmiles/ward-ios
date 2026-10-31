@@ -49,13 +49,18 @@ jobs:
           xcrun simctl boot "$DEVICE" || true
           xcrun simctl bootstatus "$DEVICE" -b
           xcrun simctl install "$DEVICE" build/Build/Products/Debug-iphonesimulator/Ward.app
-          xcrun simctl launch "$DEVICE" org.ward.ios || true
+          xcrun simctl launch "$DEVICE" org.ward.ios > launch.log 2>&1 || true
           sleep 6
           xcrun simctl io "$DEVICE" screenshot welcome.png
+          xcrun simctl spawn "$DEVICE" log show --last 2m --predicate 'process == "Ward"' > ward.log 2>&1 || true
+          ls -la ~/Library/Logs/DiagnosticReports >> ward.log 2>&1 || true
       - name: Upload screenshot
         if: success()
         continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: Ward-welcome-screenshot
-          path: welcome.png
+          path: |
+            welcome.png
+            launch.log
+            ward.log
