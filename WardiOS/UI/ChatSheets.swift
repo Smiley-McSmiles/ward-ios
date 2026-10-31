@@ -202,6 +202,17 @@ struct ChatDetailsSheet: View {
             } label: {
                 DetailRow(icon: "doc.on.doc.fill", color: palette.slate, title: "Copy address", value: "", chevron: false)
             }
+            Divider().padding(.leading, 50)
+            Button {
+                var components = URLComponents(string: "https://github.com/Smiley-McSmiles/ward-ios/issues/new")
+                components?.queryItems = [
+                    URLQueryItem(name: "title", value: "Abuse report for \(current.jid)"),
+                    URLQueryItem(name: "body", value: "Please describe the abuse. Do not include private message content or encryption keys.\n\nConversation: \(current.jid)\nAccount: \(app.account(id: current.accountId)?.jid ?? "")")
+                ]
+                if let url = components?.url { UIApplication.shared.open(url) }
+            } label: {
+                DetailRow(icon: "exclamationmark.bubble.fill", color: palette.danger, title: "Report abuse", value: "", chevron: false)
+            }
         }
         .padding(.horizontal, 14)
         .background(palette.surface, in: RoundedRectangle(cornerRadius: 18, style: .continuous))

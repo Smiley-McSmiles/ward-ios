@@ -39,30 +39,14 @@ jobs:
         with:
           name: Ward-simulator-app
           path: build/Build/Products/Debug-iphonesimulator/Ward.app
-      - name: Capture welcome screenshot
+      - name: Capture App Store screenshots
         if: success()
         continue-on-error: true
-        run: |
-          set -e
-          DEVICE="iPhone 16"
-          if ! xcrun simctl list devices available | grep -q "$DEVICE ("; then DEVICE="iPhone 15"; fi
-          xcrun simctl boot "$DEVICE" || true
-          xcrun simctl bootstatus "$DEVICE" -b
-          xcrun simctl install "$DEVICE" build/Build/Products/Debug-iphonesimulator/Ward.app
-          xcrun simctl privacy "$DEVICE" grant notifications org.ward.ios || true
-          xcrun simctl status_bar "$DEVICE" override --time "9:41" --batteryState charged --batteryLevel 100 --wifiBars 3 --cellularBars 4 || true
-          xcrun simctl launch "$DEVICE" org.ward.ios > launch.log 2>&1 || true
-          sleep 6
-          xcrun simctl io "$DEVICE" screenshot welcome.png
-          xcrun simctl spawn "$DEVICE" log show --last 2m --predicate 'process == "Ward"' > ward.log 2>&1 || true
-          ls -la ~/Library/Logs/DiagnosticReports >> ward.log 2>&1 || true
-      - name: Upload screenshot
+        run: ./scripts/screenshots.sh
+      - name: Upload screenshots
         if: success()
         continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
-          name: Ward-welcome-screenshot
-          path: |
-            welcome.png
-            launch.log
-            ward.log
+          name: Ward-app-store-screenshots
+          path: fastlane/screenshots

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Ward Privacy Policy</title>
+<style>
+:root{color-scheme:light dark}body{margin:0;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f5f5fa;color:#17171c}main{max-width:760px;margin:0 auto;padding:52px 22px 90px}h1{font-size:38px;letter-spacing:-.03em;margin:0 0 6px}h2{font-size:20px;margin:36px 0 8px}.meta{color:#777;font-size:13px;margin-bottom:34px}.card{background:#fff;border:1px solid #e4e2ec;border-radius:18px;padding:20px 22px;margin:18px 0}a{color:#3584e4}code{background:#eceaeF;border-radius:5px;padding:1px 5px}ul{padding-left:22px}@media(prefers-color-scheme:dark){body{background:#18151d;color:#eee}.card{background:#2b2632;border-color:#413a49}.meta{color:#aaa}code{background:#3a3442}}</style>
+</head>
+<body><main>
+<h1>Ward Privacy Policy</h1>
+<div class="meta">Last updated 31 October 2026 · Ward for iOS</div>
+<div class="card">
+<p><strong>Ward does not run a message server and does not collect your conversations.</strong> Ward is an XMPP client. Your account and messages live on the XMPP server you choose, and message history is stored locally on your device.</p>
+</div>
+<h2>What Ward stores on your device</h2>
+<ul>
+<li>Account address, display name, avatar, preferences and chat history in a local SQLite database.</li>
+<li>Account passwords and the app-lock passcode in the iOS Keychain. Passwords are never written to the database.</li>
+<li>Media you send or choose to download in the app's local cache.</li>
+<li>Optional scheduled messages and drafts, so they survive relaunch.</li>
+</ul>
+<h2>What leaves your device</h2>
+<ul>
+<li>XMPP stanzas go to the server and contacts you communicate with. Your server can see metadata such as your address, presence, message sizes and timestamps.</li>
+<li>Files and media are uploaded to the HTTP upload service advertised by your server.</li>
+<li>If you enable link previews, the linked website is contacted directly to read its Open Graph metadata. Link previews are optional and can be turned off in Settings → Chats → Link previews.</li>
+<li>If you choose Tenor GIF search, the search query is sent to tenor.com.</li>
+<li>If you choose location sharing, the resulting OpenStreetMap link is sent into the selected chat.</li>
+<li>Ward does not send analytics, advertising identifiers or crash telemetry to the Ward project.</li>
+</ul>
+<h2>Notifications</h2>
+<p>Notifications are generated locally by iOS. Ward does not use a Ward push server. Notification text can be hidden in Settings → Notifications.</p>
+<h2>Data retention and deletion</h2>
+<p>You can clear individual chats, clear all messages, clear media, or remove an account in Settings. Removing the app removes its local database and Keychain items. Your XMPP server and your contacts keep their own copies according to their policies; Ward cannot delete those.</p>
+<h2>Children</h2>
+<p>Ward is not directed at children under 13. You must comply with the age requirements of your XMPP server and local law.</p>
+<h2>Security</h2>
+<p>Ward uses TLS for connections and pins the server certificate on first use. OMEMO/OpenPGP message encryption is not yet enabled in this release; the app warns instead of silently sending an explicitly encrypted chat in plaintext. Do not rely on this release for confidentiality against your server.</p>
+<h2>Contact</h2>
+<p>Privacy questions and reports can be opened at <a href="https://github.com/Smiley-McSmiles/ward-ios/issues">github.com/Smiley-McSmiles/ward-ios/issues</a>.</p>
+<p>This policy may be updated when Ward adds features. The current version is always published at this URL.</p>
+</main></body></html>

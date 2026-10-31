@@ -1,0 +1,108 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_number:
+        description: "Build number (blank = UTC timestamp)"
+        required: false
+        type: string
+      validate_only:
+        description: "Validate the IPA without uploading"
+        required: false
+        default: false
+        type: boolean
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  archive:
+    name: Archive and upload to App Store Connect
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check signing configuration
+        run: |
+          test -n "${{ secrets.DEVELOPMENT_TEAM }}" || (echo "Missing DEVELOPMENT_TEAM secret" && exit 1)
+          test -n "${{ secrets.APPSTORE_KEY_ID }}" || (echo "Missing APPSTORE_KEY_ID secret" && exit 1)
+          test -n "${{ secrets.APPSTORE_ISSUER_ID }}" || (echo "Missing APPSTORE_ISSUER_ID secret" && exit 1)
+          test -n "${{ secrets.APPSTORE_API_PRIVATE_KEY }}" || (echo "Missing APPSTORE_API_PRIVATE_KEY secret" && exit 1)
+
+      - name: Install App Store Connect API key
+        run: |
+          mkdir -p "$HOME/.appstoreconnect/private_keys"
+          echo "${{ secrets.APPSTORE_API_PRIVATE_KEY }}" | base64 --decode > "$HOME/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8"
+          chmod 600 "$HOME/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8"
+          echo "APPSTORE_KEY_PATH=$HOME/.appstoreconnect/private_keys/AuthKey_${{ secrets.APPSTORE_KEY_ID }}.p8" >> "$GITHUB_ENV"
+
+      - name: Choose build number
+        run: |
+          if [ -n "${{ inputs.build_number }}" ]; then
+            echo "BUILD_NUMBER=${{ inputs.build_number }}" >> "$GITHUB_ENV"
+          else
+            echo "BUILD_NUMBER=$(date -u +%Y%m%d%H%M)" >> "$GITHUB_ENV"
+          fi
+
+      - name: Archive
+        run: |
+          xcodebuild \
+            -project Ward.xcodeproj \
+            -scheme Ward \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/Ward.xcarchive \
+            ARCHIVE=YES \
+            DEVELOPMENT_TEAM="${{ secrets.DEVELOPMENT_TEAM }}" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$APPSTORE_KEY_PATH" \
+            -authenticationKeyID "${{ secrets.APPSTORE_KEY_ID }}" \
+            -authenticationKeyIssuerID "${{ secrets.APPSTORE_ISSUER_ID }}" \
+            archive
+
+      - name: Export IPA
+        run: |
+          xcodebuild \
+            -exportArchive \
+            -archivePath build/Ward.xcarchive \
+            -exportPath build/export \
+            -exportOptionsPlist ExportOptions.plist \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "$APPSTORE_KEY_PATH" \
+            -authenticationKeyID "${{ secrets.APPSTORE_KEY_ID }}" \
+            -authenticationKeyIssuerID "${{ secrets.APPSTORE_ISSUER_ID }}"
+
+      - name: Validate with App Store Connect
+        run: |
+          xcrun altool --validate-app \
+            -f build/export/Ward.ipa \
+            -t ios \
+            --apiKey "${{ secrets.APPSTORE_KEY_ID }}" \
+            --apiIssuer "${{ secrets.APPSTORE_ISSUER_ID }}"
+
+      - name: Upload to App Store Connect
+        if: ${{ !inputs.validate_only }}
+        run: |
+          xcrun altool --upload-app \
+            -f build/export/Ward.ipa \
+            -t ios \
+            --apiKey "${{ secrets.APPSTORE_KEY_ID }}" \
+            --apiIssuer "${{ secrets.APPSTORE_ISSUER_ID }}"
+
+      - name: Upload IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ward-${{ env.BUILD_NUMBER }}.ipa
+          path: build/export/Ward.ipa
+
+      - name: Upload archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ward-${{ env.BUILD_NUMBER }}.xcarchive
+          path: build/Ward.xcarchive

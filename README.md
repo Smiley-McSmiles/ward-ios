@@ -5,7 +5,7 @@ messenger for the open XMPP network, with one-to-one and group chats, files, voi
 reactions, server administration and an interface built around Apple's design language.
 
 <p align="center">
-  <img src="WardiOS/Resources/Assets.xcassets/WardLogo.imageset/ward-512.png" width="128" alt="Ward icon">
+  <img src="docs/ward.svg" width="128" height="128" alt="Ward icon">
 </p>
 
 <p align="center">
@@ -55,7 +55,14 @@ reactions, server administration and an interface built around Apple's design la
   privacy shroud, ephemeral notification previews and no analytics. Link previews are optional
   and fetched only when enabled.
 - **Same icon.** The iOS app icon and in-app logo are generated from Ward's original shield
-  artwork.
+  artwork. The README uses the vector original.
+
+## Releasing
+
+The project is set up for App Store and TestFlight delivery: a privacy manifest, App Store
+metadata, fastlane lanes, a signed release workflow and simulator screenshot generation are
+included. See [RELEASING.md](RELEASING.md) for the end-to-end checklist and
+[docs/BUILD-SERVICES.md](docs/BUILD-SERVICES.md) for Mac build options.
 
 ## Encryption and privacy
 

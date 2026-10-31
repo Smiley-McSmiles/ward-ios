@@ -46,6 +46,7 @@
 		ABD865E0F46D43AA586CA2F8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B117879497CD074B40DEF59E /* Assets.xcassets */; };
 		AC35C55EF0E82819AE28F7C5 /* ringtone.m4a in Resources */ = {isa = PBXBuildFile; fileRef = BF266AA7F5759197ED3896F5 /* ringtone.m4a */; };
 		A1553AA4DD0B412865B8F49C /* ringback.m4a in Resources */ = {isa = PBXBuildFile; fileRef = BCF11E23FEB6D634B2F75F3E /* ringback.m4a */; };
+		AF95A8B11BA29317BD222241 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B353411880D75017C44C5F62 /* PrivacyInfo.xcprivacy */; };
 		BAD351C399405B4B33F52CF1 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		B3C030D76F7E71FD20F58DF1 /* WardApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WardApp.swift; sourceTree = "<group>"; };
 		BC90DE5F0FF7459DF96B5797 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
@@ -86,6 +87,7 @@
 		B117879497CD074B40DEF59E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BF266AA7F5759197ED3896F5 /* ringtone.m4a */ = {isa = PBXFileReference; lastKnownFileType = audio.m4a; path = ringtone.m4a; sourceTree = "<group>"; };
 		BCF11E23FEB6D634B2F75F3E /* ringback.m4a */ = {isa = PBXFileReference; lastKnownFileType = audio.m4a; path = ringback.m4a; sourceTree = "<group>"; };
+		B353411880D75017C44C5F62 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		BF4F80998CE15635C5C7E4FF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		BCE3D2CF23C64F705D9895AF /* Ward.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Ward.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C71BAC2483008906789AF3F0 /* WardiOS */ = {
@@ -275,6 +277,7 @@
 				ABD865E0F46D43AA586CA2F8 /* Assets.xcassets in Resources */,
 				AC35C55EF0E82819AE28F7C5 /* ringtone.m4a in Resources */,
 				A1553AA4DD0B412865B8F49C /* ringback.m4a in Resources */,
+				AF95A8B11BA29317BD222241 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

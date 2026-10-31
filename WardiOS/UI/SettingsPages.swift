@@ -543,6 +543,7 @@ struct AboutPage: View {
                     Divider()
                     Link("Source code", destination: URL(string: "https://github.com/Smiley-McSmiles/Ward-Android")!)
                     Link("Report an issue", destination: URL(string: "https://github.com/Smiley-McSmiles/Ward-Android/issues")!)
+                    Link("Privacy policy", destination: URL(string: "https://smiley-mcsmiles.github.io/ward-ios/privacy.html")!)
                     Link("The XMPP Standards Foundation", destination: URL(string: "https://xmpp.org")!)
                     NavigationLink("Support Ward", destination: DonatePage())
                 }

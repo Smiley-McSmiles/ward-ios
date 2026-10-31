@@ -1,0 +1,1 @@
+Ward 1.0.6 brings native XMPP account creation, PEP avatars, link previews, scheduled sending, chat export, Tenor GIF search, contact and location sharing, and AES-GCM attachment decryption.

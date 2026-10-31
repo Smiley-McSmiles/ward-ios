@@ -4,8 +4,13 @@ struct MainView: View {
     @EnvironmentObject private var app: AppModel
     @EnvironmentObject private var settings: SettingsStore
     @Environment(\.horizontalSizeClass) private var sizeClass
-    @State private var tab: AppTab = .chats
+    @State private var tab: AppTab
     @State private var columnVisibility: NavigationSplitViewVisibility = .all
+
+    init() {
+        let settingsMode = ProcessInfo.processInfo.arguments.contains("-ward-demo-settings")
+        _tab = State(initialValue: settingsMode ? .settings : .chats)
+    }
 
     var body: some View {
         Group {

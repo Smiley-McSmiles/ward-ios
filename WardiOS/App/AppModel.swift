@@ -39,9 +39,99 @@ final class AppModel: ObservableObject {
 
     // MARK: - Startup
 
+    private func loadDemoData() {
+        let now = Date().millis
+        let account = Account(id: 1, jid: "you@example.org", label: "You", color: "#3584E4",
+                              nickname: "Alex", createdAt: now)
+        accounts = [account]
+        states = [1: ConnectionState(state: "online", step: "Online", since: Date())]
+        contacts = [
+            Contact(accountId: 1, jid: "alice@example.org", rosterName: "Alice", presence: "online",
+                    status: "Out hiking", lastSeen: now),
+            Contact(accountId: 1, jid: "bob@example.org", rosterName: "Bob", presence: "away",
+                    status: "Back later", lastSeen: now - 900_000),
+            Contact(accountId: 1, jid: "design@conference.example.org", rosterName: "Design crew",
+                    presence: "online", lastSeen: now)
+        ]
+        var alice = Chat(accountId: 1, jid: "alice@example.org", type: "chat", name: "Alice")
+        alice.id = 1
+        alice.pinned = true
+        alice.lastActivity = now - 60_000
+        alice.preview = "The trail map looks perfect"
+        alice.previewSender = "Alice"
+        var group = Chat(accountId: 1, jid: "design@conference.example.org", type: "groupchat", name: "Design crew")
+        group.id = 2
+        group.unread = 3
+        group.mentions = 1
+        group.lastActivity = now - 240_000
+        group.preview = "Maya: I pushed the new palette"
+        group.previewSender = "Maya"
+        group.subject = "Spring refresh"
+        group.memberCount = 7
+        group.joined = true
+        group.ourNick = "alex"
+        var bob = Chat(accountId: 1, jid: "bob@example.org", type: "chat", name: "Bob")
+        bob.id = 3
+        bob.lastActivity = now - 3_600_000
+        bob.preview = "Sounds good, see you Friday"
+        bob.previewSender = "You"
+        chats = [alice, group, bob]
+        let aliceMessages = [
+            Message(id: 10, chatId: 1, stanzaId: "d10", originId: "d10", sender: "alice@example.org",
+                    senderJid: "alice@example.org", senderName: "Alice", direction: 0,
+                    timestamp: now - 3_600_000, body: "Hey! Are we still doing the ridge trail on Saturday?",
+                    status: 0),
+            Message(id: 11, chatId: 1, stanzaId: "d11", originId: "d11",
+                    sender: "you@example.org", senderJid: "you@example.org", senderName: "You",
+                    direction: 1, timestamp: now - 3_400_000,
+                    body: "Yes — weather looks **great**. I’ll bring the map.", isMarkdown: true, status: 3),
+            Message(id: 12, chatId: 1, stanzaId: "d12", originId: "d12", sender: "alice@example.org",
+                    senderJid: "alice@example.org", senderName: "Alice", direction: 0,
+                    timestamp: now - 180_000, body: "The trail map looks perfect", status: 0,
+                    reactions: [Reaction(emoji: ["❤️"], who: "You", mine: true)]),
+            Message(id: 13, chatId: 1, stanzaId: "d13", originId: "d13",
+                    sender: "you@example.org", senderJid: "you@example.org", senderName: "You",
+                    direction: 1, timestamp: now - 60_000, body: "See you at 8!", status: 1)
+        ]
+        let groupMessages = [
+            Message(id: 20, chatId: 2, stanzaId: "d20", originId: "d20", sender: "Maya",
+                    senderJid: "maya@example.org", senderName: "Maya", direction: 0,
+                    timestamp: now - 900_000, body: "I pushed the new palette to the shared file. The blue feels much warmer now.",
+                    status: 0),
+            Message(id: 21, chatId: 2, stanzaId: "d21", originId: "d21", sender: "Jon",
+                    senderJid: "jon@example.org", senderName: "Jon", direction: 0,
+                    timestamp: now - 700_000, body: "Nice. Can we try it with the dark theme too?",
+                    status: 0),
+            Message(id: 22, chatId: 2, stanzaId: "d22", originId: "d22",
+                    sender: "you@example.org", senderJid: "you@example.org", senderName: "Alex",
+                    direction: 1, timestamp: now - 400_000,
+                    body: "I’ll put together a quick comparison this afternoon.", status: 3),
+            Message(id: 23, chatId: 2, stanzaId: "d23", originId: "d23", sender: "Maya",
+                    senderJid: "maya@example.org", senderName: "Maya", direction: 0,
+                    timestamp: now - 240_000, body: "I pushed the new palette", status: 0)
+        ]
+        let bobMessages = [
+            Message(id: 30, chatId: 3, stanzaId: "d30", originId: "d30", sender: "bob@example.org",
+                    senderJid: "bob@example.org", senderName: "Bob", direction: 0,
+                    timestamp: now - 4_000_000, body: "Friday still works for the demo?", status: 0),
+            Message(id: 31, chatId: 3, stanzaId: "d31", originId: "d31",
+                    sender: "you@example.org", senderJid: "you@example.org", senderName: "You",
+                    direction: 1, timestamp: now - 3_600_000, body: "Sounds good, see you Friday", status: 2)
+        ]
+        messages = [1: aliceMessages, 2: groupMessages, 3: bobMessages]
+        if ProcessInfo.processInfo.arguments.contains("-ward-demo-chat") {
+            selectedChatId = 1
+        }
+    }
+
     func start() {
         guard !started else { return }
         started = true
+        if ProcessInfo.processInfo.arguments.contains("-ward-demo") {
+            loadDemoData()
+            isReady = true
+            return
+        }
         Task {
             do {
                 let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]

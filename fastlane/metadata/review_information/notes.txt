@@ -1,0 +1,10 @@
+Ward is an XMPP client and requires an XMPP account. A reviewer account can be supplied here before submission. In-band registration is available from the welcome screen on servers that support XEP-0077. The app has no Ward-operated server.
+
+Suggested review path:
+1. Sign in with the supplied test account (or Create an account on a server that allows it).
+2. Open a one-to-one chat and a group chat.
+3. Try Settings, app lock, the XML console and server administration if the account is an admin.
+4. Link previews can be disabled in Settings → Chats → Link previews.
+5. Location sharing is only requested after tapping Share location.
+
+Ward stores data locally and does not contact any Ward backend. The source is MIT-licensed on GitHub.
