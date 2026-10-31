@@ -89,7 +89,7 @@ final class TCPTransport {
         }
         parameters.allowLocalEndpointReuse = true
         parameters.includePeerToPeer = false
-        let connection = NWConnection(host: NWEndpoint.Host(host), port: NWEndpoint.Port(rawValue: port), using: parameters)
+        let connection = NWConnection(host: NWEndpoint.Host(host), port: NWEndpoint.Port(rawValue: port) ?? NWEndpoint.Port(rawValue: 5222)!, using: parameters)
         self.connection = connection
         connection.stateUpdateHandler = { [weak self] state in
             guard let self else { return }
