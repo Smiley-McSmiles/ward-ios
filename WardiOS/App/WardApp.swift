@@ -108,6 +108,7 @@ struct RootView: View {
             screenCaptured = UIScreen.main.isCaptured && app.settings.bool("security.block_screenshots")
         }
         .onReceive(NotificationCenter.default.publisher(for: .wardOpenChat)) { note in
+            UserDefaults.standard.removeObject(forKey: "ward.pendingChat")
             if let id = note.userInfo?["chatId"] as? Int64 { app.selectChat(id) } else if let id = note.userInfo?["chatId"] as? Int { app.selectChat(Int64(id)) }
         }
         .onOpenURL { url in app.handleURL(url) }

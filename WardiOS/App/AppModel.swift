@@ -139,6 +139,10 @@ final class AppModel: ObservableObject {
     func start() {
         guard !started else { return }
         started = true
+        if ProcessInfo.processInfo.arguments.contains("-ward-demo-welcome") {
+            isReady = true
+            return
+        }
         if ProcessInfo.processInfo.arguments.contains("-ward-demo") {
             loadDemoData()
             isReady = true
@@ -152,6 +156,9 @@ final class AppModel: ObservableObject {
                 database = try WardDatabase(url: url)
                 await reloadAll()
                 isReady = true
+                if !accounts.isEmpty {
+                    NotificationManager.shared.requestAuthorization()
+                }
                 for account in accounts where account.enabled {
                     connect(account)
                 }
@@ -296,6 +303,8 @@ final class AppModel: ObservableObject {
         guard let database else { return }
         disconnect(account)
         SecureStore.shared.remove("password.\(account.jid)")
+        UserDefaults.standard.removeObject(forKey: "ward.mam.since.\(account.id)")
+        UserDefaults.standard.removeObject(forKey: "ward.mam.uid.\(account.id)")
         try? await database.deleteAccount(id: account.id)
         accounts.removeAll { $0.id == account.id }
         contacts.removeAll { $0.accountId == account.id }

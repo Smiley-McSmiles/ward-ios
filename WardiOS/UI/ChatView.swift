@@ -89,8 +89,9 @@ struct ChatView: View {
                         }
                         .padding(.top, 8)
                         .padding(.bottom, 8)
-                        .frame(maxWidth: 860)
-                        .frame(maxWidth: .infinity)
+                        .containerRelativeFrame(.horizontal, alignment: .center) { length, _ in
+                            min(length, 860)
+                        }
                         .animation(app.settings.bool("appearance.message_animations") ? .spring(response: 0.42, dampingFraction: 0.84) : nil,
                                    value: messages.map(\.id))
                     }

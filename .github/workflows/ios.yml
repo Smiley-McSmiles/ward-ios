@@ -27,6 +27,9 @@ jobs:
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO \
             build | tee build.log
+      - name: Static analyzer
+        run: |
+          xcodebuild             -project Ward.xcodeproj             -scheme Ward             -configuration Debug             -sdk iphonesimulator             -destination 'generic/platform=iOS Simulator'             CODE_SIGNING_ALLOWED=NO             analyze
       - name: Upload build log
         if: always()
         uses: actions/upload-artifact@v4

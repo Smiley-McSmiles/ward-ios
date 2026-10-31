@@ -12,7 +12,7 @@ reactions, server administration and an interface built around Apple's design la
   <a href="https://github.com/Smiley-McSmiles/ward-ios/actions/workflows/ios.yml"><img src="https://github.com/Smiley-McSmiles/ward-ios/actions/workflows/ios.yml/badge.svg" alt="iOS build"></a>
   <img src="https://img.shields.io/badge/iOS-17%2B-blue.svg?style=flat-square" alt="iOS 17+">
   <img src="https://img.shields.io/badge/SwiftUI-native-0D96F6.svg?style=flat-square" alt="SwiftUI">
-  <img src="https://img.shields.io/badge/protocol-XMPP%20%7C%20OMEMO-purple.svg?style=flat-square" alt="XMPP">
+  <img src="https://img.shields.io/badge/protocol-XMPP%20%7C%20TLS-purple.svg?style=flat-square" alt="XMPP">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green.svg?style=flat-square" alt="MIT License"></a>
 </p>
 
@@ -154,9 +154,9 @@ and preserves full-text search without exposing a second schema to every screen.
 - Ward will not send a password over a plaintext stream. STARTTLS is required unless the account
   explicitly uses the `none` transport (not exposed in the UI).
 - OMEMO/OpenPGP are not wired yet. Encrypted chats are marked, the UI explains the gap, and
-  sending is blocked when a chat explicitly asks for OMEMO or OpenPGP. New chats send
-  unencrypted after a visible one-time warning. Do not use this build where confidentiality
-  against the server is required.
+  sending is blocked when a chat explicitly asks for OMEMO or OpenPGP. New chats default to
+  unencrypted in this release so the app is usable; an open-lock indicator marks that state.
+  Do not use this build where confidentiality against the server is required.
 - App lock uses Face ID/Touch ID and a four-digit passcode. The passcode is salted and hashed
   before being stored in the Keychain. The app shroud hides content in the app switcher.
 - iOS restricts long-lived background sockets. Ward keeps the connection while it is running and

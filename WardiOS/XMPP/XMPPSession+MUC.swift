@@ -346,6 +346,13 @@ extension XMPPSession {
             defaults.set(now.timeIntervalSince1970, forKey: syncKey)
             if let lastUID { defaults.set(lastUID, forKey: uidKey) }
         }
+        // Group history lives in each room's archive, not the account archive.
+        let rooms = ((try? await database.chats()) ?? [])
+            .filter { $0.accountId == accountId && $0.isGroup && $0.joined }
+            .prefix(20)
+        for room in rooms {
+            _ = await syncChat(room, pages: 1)
+        }
     }
 
     /// Fetch recent pages for one chat, walking backwards so a manual re-sync can fill gaps.

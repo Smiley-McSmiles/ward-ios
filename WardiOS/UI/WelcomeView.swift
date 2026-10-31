@@ -95,7 +95,7 @@ private struct StartPage: View {
                     .opacity(appeared ? 1 : 0)
                     .offset(y: appeared ? 0 : 10)
 
-                Text("Private chats and groups on the open XMPP network. Use any server, manage your own keys, and keep the conversation yours.")
+                Text("Private chats and groups on the open XMPP network. Use any server, keep your own history, and keep the conversation yours.")
                     .font(.body)
                     .foregroundStyle(palette.secondaryText)
                     .multilineTextAlignment(.center)

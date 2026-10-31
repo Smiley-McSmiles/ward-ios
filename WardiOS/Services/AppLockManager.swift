@@ -28,6 +28,11 @@ final class AppLockManager: ObservableObject {
         enabled = defaults.bool(forKey: "ward.applock.enabled")
         useBiometrics = defaults.object(forKey: "ward.applock.biometrics") as? Bool ?? true
         delay = defaults.integer(forKey: "ward.applock.delay")
+        if enabled && !hasPasscode {
+            // Recover safely if the Keychain was wiped: never leave the UI in a state where any
+            // four-digit sequence can dismiss the lock.
+            enabled = false
+        }
         locked = enabled
         checkBiometrics()
     }

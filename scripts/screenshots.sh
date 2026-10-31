@@ -24,6 +24,7 @@ shoot() {
   sleep 5
   xcrun simctl io "$DEVICE" screenshot "$OUT/${PREFIX}-${name}.png"
 }
+shoot welcome -ward-demo-welcome
 shoot chats -ward-demo
 shoot conversation -ward-demo -ward-demo-chat
 shoot settings -ward-demo -ward-demo-settings
