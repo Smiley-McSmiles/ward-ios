@@ -196,6 +196,7 @@
 			isa = PBXGroup;
 			children = (
 				B117879497CD074B40DEF59E /* Assets.xcassets */,
+				B353411880D75017C44C5F62 /* PrivacyInfo.xcprivacy */,
 				C903D6E2F17F92EB456530D7 /* Sounds */,
 			);
 			path = Resources;
