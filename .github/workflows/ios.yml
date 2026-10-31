@@ -39,3 +39,23 @@ jobs:
         with:
           name: Ward-simulator-app
           path: build/Build/Products/Debug-iphonesimulator/Ward.app
+      - name: Capture welcome screenshot
+        if: success()
+        continue-on-error: true
+        run: |
+          set -e
+          DEVICE="iPhone 16"
+          if ! xcrun simctl list devices available | grep -q "$DEVICE ("; then DEVICE="iPhone 15"; fi
+          xcrun simctl boot "$DEVICE" || true
+          xcrun simctl bootstatus "$DEVICE" -b
+          xcrun simctl install "$DEVICE" build/Build/Products/Debug-iphonesimulator/Ward.app
+          xcrun simctl launch "$DEVICE" org.ward.ios || true
+          sleep 6
+          xcrun simctl io "$DEVICE" screenshot welcome.png
+      - name: Upload screenshot
+        if: success()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ward-welcome-screenshot
+          path: welcome.png
