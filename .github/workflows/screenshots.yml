@@ -7,11 +7,16 @@ jobs:
   screenshots:
     runs-on: macos-15
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - device: "iPhone 16 Pro Max"
+            prefix: "6.9-inch"
+          - device: "iPad Pro 13-inch (M4)"
+            prefix: "13-inch-ipad"
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
       - name: Build simulator app
         run: |
           xcodebuild \
@@ -24,8 +29,11 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             build
       - name: Capture
+        env:
+          DEVICE: ${{ matrix.device }}
+          PREFIX: ${{ matrix.prefix }}
         run: ./scripts/screenshots.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: Ward-app-store-screenshots
+          name: Ward-screenshots-${{ matrix.prefix }}
           path: fastlane/screenshots

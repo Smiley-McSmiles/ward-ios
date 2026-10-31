@@ -5,6 +5,7 @@ cd "$(dirname "$0")/.."
 APP="${APP_PATH:-build/Build/Products/Debug-iphonesimulator/Ward.app}"
 OUT="${OUT_DIR:-fastlane/screenshots/en-US}"
 DEVICE="${DEVICE:-iPhone 16 Pro Max}"
+PREFIX="${PREFIX:-6.9-inch}"
 mkdir -p "$OUT"
 echo "Device: $DEVICE"
 echo "App: $APP"
@@ -21,7 +22,7 @@ shoot() {
   xcrun simctl terminate "$DEVICE" org.ward.ios 2>/dev/null || true
   xcrun simctl launch "$DEVICE" org.ward.ios "$@" >/dev/null
   sleep 5
-  xcrun simctl io "$DEVICE" screenshot "$OUT/6.9-inch-${name}.png"
+  xcrun simctl io "$DEVICE" screenshot "$OUT/${PREFIX}-${name}.png"
 }
 shoot chats -ward-demo
 shoot conversation -ward-demo -ward-demo-chat
