@@ -52,7 +52,8 @@ final class TCPTransport {
         let parameters: NWParameters
         if tls {
             let tlsOptions = NWProtocolTLS.Options()
-            if let sec = tlsOptions.securityProtocolOptions {
+            let sec = tlsOptions.securityProtocolOptions
+            do {
                 sec_protocol_options_set_tls_server_name(sec, serverName)
                 sec_protocol_options_set_min_tls_protocol_version(sec, .TLSv12)
                 let expected = TLSPins.stored(host: serverName)
@@ -88,7 +89,7 @@ final class TCPTransport {
         }
         parameters.allowLocalEndpointReuse = true
         parameters.includePeerToPeer = false
-        let connection = NWConnection(host: NWEndpoint.Host(host), port: NWEndpoint.Port(string: String(port)) ?? NWEndpoint.Port(string: "5222")!, using: parameters)
+        let connection = NWConnection(host: NWEndpoint.Host(host), port: NWEndpoint.Port(rawValue: port), using: parameters)
         self.connection = connection
         connection.stateUpdateHandler = { [weak self] state in
             guard let self else { return }
