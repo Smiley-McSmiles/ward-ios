@@ -93,9 +93,12 @@ extension XMPPSession {
 
     private func trustedOMEMOBundles(_ bundles: [OMEMOBundle], jid: String) async -> [OMEMOBundle] {
         let devices = (try? await database.devices(accountId: accountId, jid: jid)) ?? []
-        let distrusted = Set(devices.filter { $0.protocolName == "omemo2" && $0.trust == "distrusted" }
-            .map { UInt32(truncatingIfNeeded: $0.deviceId) })
-        return bundles.filter { !distrusted.contains($0.deviceId) }
+        let manual = settings.string("encryption.trust", "btbv") == "manual"
+        let blocked = Set(devices.filter {
+            $0.protocolName == "omemo2"
+                && ($0.trust == "distrusted" || (manual && $0.trust != "trusted"))
+        }.map { UInt32(truncatingIfNeeded: $0.deviceId) })
+        return bundles.filter { !blocked.contains($0.deviceId) }
     }
 
     private func parseBundle(_ item: XMLNode, deviceId: UInt32) -> OMEMOBundle? {
@@ -126,13 +129,18 @@ extension XMPPSession {
         }
         let trust: String
         if let existing {
-            trust = existing.fingerprint == fingerprint ? existing.trust : "undecided"
+            if existing.fingerprint != fingerprint {
+                trust = "distrusted"
+                onToast?("The OMEMO identity key for \(jid) device \(bundle.deviceId) changed. Verify it before sending.", true)
+            } else {
+                trust = existing.trust
+            }
         } else {
             trust = settings.string("encryption.trust", "btbv") == "btbv" ? "trusted" : "undecided"
         }
         let device = Device(accountId: accountId, jid: jid, deviceId: Int64(bundle.deviceId),
                             fingerprint: fingerprint, label: "Device \(bundle.deviceId)",
-                            trust: trust, own: false, thisDevice: false,
+                            trust: trust, own: jid == account.bareJID, thisDevice: false,
                             protocolName: "omemo2")
         try? await database.saveDevice(device)
         onDevicesChanged?(jid)
@@ -144,11 +152,20 @@ extension XMPPSession {
             $0.deviceId == Int64(deviceId) && $0.protocolName == "omemo2"
         }
         let trust: String
-        if let existing { trust = existing.fingerprint == fingerprint ? existing.trust : "undecided" }
-        else { trust = settings.string("encryption.trust", "btbv") == "btbv" ? "trusted" : "undecided" }
+        if let existing {
+            if existing.fingerprint != fingerprint {
+                trust = "distrusted"
+                onToast?("The OMEMO identity key for \(jid) device \(deviceId) changed. Verify it before sending.", true)
+            } else {
+                trust = existing.trust
+            }
+        } else {
+            trust = settings.string("encryption.trust", "btbv") == "btbv" ? "trusted" : "undecided"
+        }
         let device = Device(accountId: accountId, jid: jid, deviceId: Int64(deviceId),
                             fingerprint: fingerprint, label: "Device \(deviceId)",
-                            trust: trust, own: false, thisDevice: false, protocolName: "omemo2")
+                            trust: trust, own: jid == account.bareJID, thisDevice: false,
+                            protocolName: "omemo2")
         try? await database.saveDevice(device)
         onDevicesChanged?(jid)
     }

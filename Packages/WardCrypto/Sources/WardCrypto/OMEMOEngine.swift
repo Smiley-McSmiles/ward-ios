@@ -13,8 +13,11 @@ public final class OMEMOEngine {
 
     public init(storeURL: URL?) throws {
         self.storeURL = storeURL
-        if let storeURL, let data = try? Data(contentsOf: storeURL),
-           let stored = try? JSONDecoder().decode(OMEMOStoreData.self, from: data) {
+        if let storeURL, FileManager.default.fileExists(atPath: storeURL.path) {
+            // Never silently replace an existing identity if its store is unreadable: that would
+            // look like an identity change to every contact and lose all ratchet sessions.
+            let data = try Data(contentsOf: storeURL)
+            let stored = try JSONDecoder().decode(OMEMOStoreData.self, from: data)
             identity = stored.identity
             sessions = stored.sessions
         } else {

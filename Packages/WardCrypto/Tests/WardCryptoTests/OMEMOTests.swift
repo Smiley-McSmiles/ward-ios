@@ -227,6 +227,14 @@ final class OMEMOTests: XCTestCase {
         XCTAssertFalse(second.keys[0].keyExchange)
     }
 
+    func testCorruptStoreDoesNotResetIdentity() throws {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("ward-omemo-corrupt-\(UUID().uuidString).json")
+        try Data("not json".utf8).write(to: url)
+        XCTAssertThrowsError(try OMEMOEngine(storeURL: url))
+        XCTAssertEqual(try String(contentsOf: url, encoding: .utf8), "not json")
+    }
+
     private func makeEngine(_ name: String) throws -> OMEMOEngine {
         let url = FileManager.default.temporaryDirectory
             .appendingPathComponent("ward-omemo-test-\(name)-\(UUID().uuidString).json")

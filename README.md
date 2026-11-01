@@ -193,9 +193,13 @@ MIT-licensed, like Ward. The Ward icon is Ward's icon. See [LICENSE](LICENSE).
 
 ## Verification
 
-This project was authored on a Linux workstation, where Xcode and the iOS SDK are not
-available. The Swift sources were parsed with the Swift 6 toolchain, and the Foundation-only
-core (models, XML stream, transport, connection state machine, XMPP session, SQLite store and
-app model) was type-checked against small API stubs. The SwiftUI layer needs a real Xcode build
-on macOS to compile and run. `scripts/build.sh` runs that build; `scripts/check-swift.sh`
-performs the Linux syntax pass.
+The `iOS` GitHub Actions workflow builds the app for the simulator, runs the static analyzer and
+runs `swift test --package-path Packages/WardCrypto` on macOS. Those tests cover protobuf
+encoding, AES-CBC/HKDF, X3DH and Double Ratchet round trips, tampering, identity-change rejection,
+prekey reuse, SCE content and session confirmation.
+
+A separate `OMEMO interop` workflow builds `Interop/` and runs `Interop/harness.py` against the
+independent `twomemo` Python backend in both directions, including DH ratchet steps and
+out-of-order delivery. The `Screenshots` workflow captures App Store images from simulator demo
+data. `scripts/check-swift.sh` still provides a fast Linux syntax pass for the Foundation-only
+core.

@@ -589,6 +589,12 @@ extension XMPPSession {
         let emojis = alreadyMine ? [] : [emoji]
         if omemoRequired(chat) || (chat.encryptionMode == .default && settings.string("encryption.default", "off") == "always") {
             if await sendEncryptedReaction(chat: chat, target: target, emojis: emojis) { return }
+            if omemoRequired(chat) {
+                try? await database.updateMessage(message)
+                onMessageChanged?(message)
+                onToast?("This reaction could not be sent with OMEMO.", true)
+                return
+            }
         }
         let reactions = alreadyMine
             ? "<reactions xmlns='\(NS.reactions)' id='\(XML.escape(target))'/>"
@@ -607,6 +613,12 @@ extension XMPPSession {
         let type = chat.isGroup ? "groupchat" : "chat"
         if omemoRequired(chat) || (chat.encryptionMode == .default && settings.string("encryption.default", "off") == "always") {
             if await sendEncryptedEdit(chat: chat, target: target, text: text) { return }
+            if omemoRequired(chat) {
+                try? await database.updateMessage(message)
+                onMessageChanged?(message)
+                onToast?("This edit could not be sent with OMEMO.", true)
+                return
+            }
         }
         let xml = "<message to='\(XML.escape(chat.jid))' type='\(type)'><body>\(XML.escape(text))</body><replace xmlns='\(NS.correct)' id='\(XML.escape(target))'/><origin-id xmlns='\(NS.sid)' id='\(String.wardID())'/><store xmlns='\(NS.hints)'/></message>"
         _ = connection?.send(xml)
@@ -624,6 +636,12 @@ extension XMPPSession {
         let type = chat.isGroup ? "groupchat" : "chat"
         if omemoRequired(chat) || (chat.encryptionMode == .default && settings.string("encryption.default", "off") == "always") {
             if await sendEncryptedRetraction(chat: chat, target: target) { return }
+            if omemoRequired(chat) {
+                try? await database.updateMessage(message)
+                onMessageChanged?(message)
+                onToast?("This deletion could not be sent with OMEMO.", true)
+                return
+            }
         }
         let xml = "<message to='\(XML.escape(chat.jid))' type='\(type)'><retract xmlns='\(NS.retract)' id='\(XML.escape(target))'/><origin-id xmlns='\(NS.sid)' id='\(String.wardID())'/><store xmlns='\(NS.hints)'/></message>"
         _ = connection?.send(xml)

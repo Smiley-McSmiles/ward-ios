@@ -139,8 +139,8 @@ enum SettingsSchema {
         // Encryption
         c("encryption.default", "Default encryption", "Used for new chats; each chat can override it. OMEMO 2 is available for one-to-one chats", "encryption", "Encryption", "off",
           [("always", "Always (recommended)"), ("available", "When available"), ("off", "Off")]),
-        c("encryption.trust", "Trust new devices", "What Ward does the first time a contact adds a device", "encryption", "Encryption", "btbv",
-          [("btbv", "Blind trust before verification"), ("manual", "Ask every time")]),
+        c("encryption.trust", "Trust new devices", "Changed identity keys are always blocked until you verify them", "encryption", "Encryption", "btbv",
+          [("btbv", "Blind trust before verification"), ("manual", "Only verified devices")]),
         b("encryption.legacy_omemo", "Allow legacy OMEMO (0.3)", "Legacy OMEMO 0.3 is not implemented; Ward uses OMEMO 2 for one-to-one chats", "encryption", "Encryption", false),
         b("pgp.enabled", "OpenPGP", "Optional end-to-end encryption with GnuPG keys (XEP-0373)", "encryption", "OpenPGP"),
 
