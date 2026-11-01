@@ -40,7 +40,9 @@ final class AppModel: ObservableObject {
     // MARK: - Startup
 
     private func loadDemoData() {
-        let now = Date().millis
+        let calendar = Calendar.current
+        let anchor = calendar.date(bySettingHour: 9, minute: 30, second: 0, of: Date()) ?? Date()
+        let now = anchor.millis
         let account = Account(id: 1, jid: "alex@example.org", label: "", color: "#3584E4",
                               nickname: "Alex", createdAt: now)
         accounts = [account]
