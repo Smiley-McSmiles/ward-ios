@@ -13,6 +13,10 @@ extension XMPPSession {
             onToast?("Group calls are not supported.", true)
             return
         }
+        // JMI signalling is implemented, but the WebRTC media layer is not in this build. Do not
+        // leave the user in a ringing overlay that can never connect.
+        onToast?("Audio and video call media are not available in this build yet.", true)
+        return
         let callID = UUID()
         var call = CallState(peer: chat.jid, accountId: accountId, kind: video ? .video : .audio,
                              status: .outgoing, incoming: false)
@@ -85,16 +89,8 @@ extension XMPPSession {
             return false
         }
         guard settings.bool("calls.enabled") else { return true }
-        if let proposal, let from = node.attr("from") {
-            let id = proposal.attr("id", String.wardID())
-            let media = proposal.child("description", xmlns: NS.jingleApps)?.attr("media", "audio") ?? "audio"
-            var call = CallState(peer: JID.bare(from), accountId: accountId,
-                                 kind: media == "video" ? .video : .audio,
-                                 status: .ringing, incoming: true)
-            call.id = UUID(uuidString: id) ?? UUID()
-            call.incoming = true
-            activeCall = call
-            onCallChanged?(call)
+        if proposal != nil {
+            onToast?("Incoming call signalling received, but audio and video media are not available in this build yet.", true)
             return true
         }
         if accept != nil || proceed != nil {

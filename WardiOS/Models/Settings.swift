@@ -99,7 +99,7 @@ enum SettingsSchema {
         b("chats.send_receipts", "Send delivery receipts", "", "chats", "Sharing", true),
 
         // Calls
-        b("calls.enabled", "Audio and video calls", "Contacts can call you, and you them, on this device", "calls", "Calls", true),
+        b("calls.enabled", "Audio and video calls", "Jingle signalling is prepared, but audio/video media is not available in this build", "calls", "Calls", true),
         i("calls.speaker_gain", "Speaker volume", "Applied to the other person's audio during calls", "calls", "Audio", 100, 50, 200, 5, "%"),
         b("calls.discover", "Discover STUN/TURN from the server", "Use XEP-0215 external service discovery for call relay servers", "calls", "Network", true),
         t("calls.stun", "STUN servers", "Space-separated stun:host:port addresses", "calls", "Network"),
@@ -141,7 +141,7 @@ enum SettingsSchema {
           [("always", "Always (recommended)"), ("available", "When available"), ("off", "Off")]),
         c("encryption.trust", "Trust new devices", "What Ward does the first time a contact adds a device", "encryption", "Encryption", "btbv",
           [("btbv", "Blind trust before verification"), ("manual", "Ask every time")]),
-        b("encryption.legacy_omemo", "Allow OMEMO (legacy 0.3)", "Required for Default (OMEMO) and most other XMPP apps", "encryption", "Encryption", true),
+        b("encryption.legacy_omemo", "Allow OMEMO (legacy 0.3)", "Not available in this build yet; explicit OMEMO chats are blocked", "encryption", "Encryption", false),
         b("pgp.enabled", "OpenPGP", "Optional end-to-end encryption with GnuPG keys (XEP-0373)", "encryption", "OpenPGP"),
 
         // Privacy

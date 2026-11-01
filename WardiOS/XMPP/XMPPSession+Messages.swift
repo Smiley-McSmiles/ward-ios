@@ -171,12 +171,8 @@ extension XMPPSession {
         guard let inserted = try? await database.insertMessage(message) else { return }
         onMessage?(inserted, chat)
         let updatedChat = await touchChat(chat, message: inserted, outgoing: outgoing)
-        if !outgoing {
-            if activeChatId == chat.id && appForeground {
-                if settings.bool("chats.send_receipts") { sendReceipt(chat: updatedChat, stanzaId: stanzaId) }
-                if settings.bool("chats.send_markers") { sendDisplayed(chat: updatedChat, message: inserted) }
-                await markRead(updatedChat)
-            }
+        if !outgoing && activeChatId == chat.id && appForeground {
+            await markRead(updatedChat)
         }
     }
 
@@ -258,7 +254,6 @@ extension XMPPSession {
         onMessage?(inserted, chat)
         let updatedChat = await touchChat(chat, message: inserted, outgoing: mine)
         if !mine && activeChatId == chat.id && appForeground {
-            if settings.bool("chats.send_markers") { sendDisplayed(chat: updatedChat, message: inserted) }
             await markRead(updatedChat)
         }
     }

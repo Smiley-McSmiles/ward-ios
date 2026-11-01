@@ -46,6 +46,7 @@ struct ChatView: View {
         ZStack {
             WardBackground()
             if let chat {
+                GeometryReader { geometry in
                 ScrollViewReader { proxy in
                     ScrollView {
                         LazyVStack(spacing: 0) {
@@ -89,9 +90,7 @@ struct ChatView: View {
                         }
                         .padding(.top, 8)
                         .padding(.bottom, 8)
-                        .containerRelativeFrame(.horizontal, alignment: .center) { length, _ in
-                            min(length, 860)
-                        }
+                        .padding(.horizontal, max(0, (geometry.size.width - 860) / 2))
                         .animation(app.settings.bool("appearance.message_animations") ? .spring(response: 0.42, dampingFraction: 0.84) : nil,
                                    value: messages.map(\.id))
                     }
@@ -134,6 +133,7 @@ struct ChatView: View {
                         }
                     }
                 }
+                }
             } else {
                 EmptyStateView(icon: "bubble.left.slash", title: "Chat unavailable",
                                subtitle: "This conversation was removed.")
@@ -158,12 +158,7 @@ struct ChatView: View {
                                     } else {
                                         Text(WardFormat.presence(contact, state: sessionState))
                                     }
-                                    if app.effectiveEncryption(chat) == .off {
-                                        Image(systemName: "lock.open.fill")
-                                            .font(.system(size: 8))
-                                            .foregroundStyle(palette.warning)
-                                            .accessibilityLabel("Unencrypted")
-                                    } else if app.effectiveEncryption(chat) != .off {
+                                    if app.effectiveEncryption(chat) != .off {
                                         Image(systemName: "lock.fill").font(.system(size: 7))
                                     }
                                 }
