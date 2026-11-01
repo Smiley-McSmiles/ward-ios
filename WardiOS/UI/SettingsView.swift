@@ -286,7 +286,7 @@ struct SettingsPageView: View {
                     if pageKey == "encryption" {
                         HStack(alignment: .top, spacing: 9) {
                             Image(systemName: "exclamationmark.shield.fill").foregroundStyle(palette.warning)
-                            Text("OMEMO and OpenPGP message encryption are not wired in this release. Explicitly encrypted chats are blocked rather than sent in plaintext.")
+                            Text("Ward supports OMEMO 2 for one-to-one chats using its own MIT-licensed ratchet. Group OMEMO sending, legacy OMEMO 0.3 and OpenPGP are not supported; explicit encryption never falls back to plaintext silently.")
                                 .font(.caption).foregroundStyle(palette.secondaryText)
                         }
                         .padding(12)

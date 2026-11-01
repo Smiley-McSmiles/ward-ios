@@ -103,6 +103,14 @@ struct ChatDetailsSheet: View {
         }
     }
 
+    private func encryptionLabel(_ mode: EncryptionMode, isGroup: Bool) -> String {
+        switch mode {
+        case .omemo: return isGroup ? "OMEMO (one-to-one only)" : mode.label
+        case .pgp: return "\(mode.label) (not available)"
+        default: return mode.label
+        }
+    }
+
     private var settingsCard: some View {
         VStack(spacing: 0) {
             Menu {
@@ -110,10 +118,10 @@ struct ChatDetailsSheet: View {
                     Button {
                         Task { await app.setEncryption(current, mode) }
                     } label: {
-                        Label(mode == .omemo || mode == .pgp ? "\(mode.label) (not available)" : mode.label,
+                        Label(encryptionLabel(mode, isGroup: current.isGroup),
                               systemImage: current.encryptionMode == mode ? "checkmark" : "")
                     }
-                    .disabled(mode == .omemo || mode == .pgp)
+                    .disabled(mode == .pgp || (mode == .omemo && current.isGroup))
                 }
             } label: {
                 DetailRow(icon: "lock.shield.fill", color: palette.success, title: "Encryption",

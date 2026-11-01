@@ -1,1 +1,1 @@
-Ward 1.0.6 brings native XMPP account creation, PEP avatars, link previews, scheduled sending, chat export, Tenor GIF search, contact and location sharing, and AES-GCM attachment decryption.
+Ward 1.0.6 adds OMEMO 2 end-to-end encryption for one-to-one chats, with per-device sessions and encrypted attachments. It also brings native XMPP account creation, PEP avatars, link previews, scheduled sending, chat export, Tenor GIF search, contact and location sharing, and AES-GCM attachment decryption.

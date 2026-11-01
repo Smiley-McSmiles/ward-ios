@@ -1,1 +1,1 @@
-Private messaging on the open XMPP network. Any server, your own keys, groups, files, voice notes and a native iOS interface. No ads, no tracking and no Ward account.
+Private messaging on the open XMPP network. Any server, your own keys, groups, files, voice notes and a native iOS interface. OMEMO 2 end-to-end encryption for one-to-one chats. No ads, no tracking and no Ward account.

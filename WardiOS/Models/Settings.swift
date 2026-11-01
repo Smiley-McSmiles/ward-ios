@@ -137,11 +137,11 @@ enum SettingsSchema {
         b("notify.sounds", "Notification sounds", "Play a sound for new messages outside quiet hours", "notifications", "Sounds", true),
 
         // Encryption
-        c("encryption.default", "Default encryption", "Used for new chats; each chat can override it. This build does not yet implement OMEMO", "encryption", "Encryption", "off",
+        c("encryption.default", "Default encryption", "Used for new chats; each chat can override it. OMEMO 2 is available for one-to-one chats", "encryption", "Encryption", "off",
           [("always", "Always (recommended)"), ("available", "When available"), ("off", "Off")]),
         c("encryption.trust", "Trust new devices", "What Ward does the first time a contact adds a device", "encryption", "Encryption", "btbv",
           [("btbv", "Blind trust before verification"), ("manual", "Ask every time")]),
-        b("encryption.legacy_omemo", "Allow OMEMO (legacy 0.3)", "Not available in this build yet; explicit OMEMO chats are blocked", "encryption", "Encryption", false),
+        b("encryption.legacy_omemo", "Allow legacy OMEMO (0.3)", "Legacy OMEMO 0.3 is not implemented; Ward uses OMEMO 2 for one-to-one chats", "encryption", "Encryption", false),
         b("pgp.enabled", "OpenPGP", "Optional end-to-end encryption with GnuPG keys (XEP-0373)", "encryption", "OpenPGP"),
 
         // Privacy

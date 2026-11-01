@@ -1,1 +1,1 @@
-xmpp,jabber,chat,messenger,groups,voice,privacy,files,open source
+xmpp,jabber,chat,messenger,encryption,omemo,privacy,groups,open source

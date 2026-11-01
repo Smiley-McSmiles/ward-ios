@@ -23,8 +23,9 @@ reactions, server administration and an interface built around Apple's design la
 </p>
 
 > **Status:** this is a working native app with an XMPP core, local history, chat UI, group
-> chats, media, settings, app lock and server tools. OMEMO/OpenPGP ratchets and WebRTC call
-> media are the two large pieces that are not finished; see [PARITY.md](PARITY.md). The app is
+> chats, media, settings, app lock and server tools. One-to-one chats support OMEMO 2 through
+> the local MIT-licensed `WardCrypto` package. Group OMEMO sending, legacy OMEMO 0.3,
+> OpenPGP and WebRTC call media remain unfinished; see [PARITY.md](PARITY.md). The app is
 > deliberately honest in the UI instead of silently downgrading an encrypted chat.
 
 ## Highlights
@@ -81,10 +82,16 @@ passcode is salted and hashed, and the screen is hidden in the app switcher. Inc
 XEP-0454 AES-GCM files are decrypted locally. Link previews are optional and fetched without
 cookies or analytics.
 
-The OMEMO/OpenPGP ratchets and WebRTC media are the remaining large engineering pieces. The UI
-does not silently downgrade an explicitly encrypted chat: sending OMEMO or OpenPGP is blocked
-until the ratchet is wired; new chats default to Off in this build so the app remains usable,
-and the chat details make that state explicit.
+One-to-one chats use OMEMO 2 (XEP-0384) implemented in `Packages/WardCrypto` under the same MIT
+licence as the app: X3DH key agreement, the OMEMO Double Ratchet, SCE envelopes, bundles,
+prekeys and per-device sessions. It uses libsodium and CryptoSwift, not GPL libsignal. The crypto
+tests include both directions against the independent `twomemo` Python backend.
+
+Files sent in encrypted chats are AES-GCM encrypted before upload (XEP-0454), and the decryption
+key travels inside the OMEMO payload. Group OMEMO sending, legacy OMEMO 0.3 and OpenPGP are not
+implemented. A chat explicitly set to OMEMO refuses to send rather than silently downgrading; the
+"When available" default may fall back to plaintext only with an explicit warning. New chats
+still default to Off in this release.
 
 ## Requirements
 
@@ -154,10 +161,10 @@ and preserves full-text search without exposing a second schema to every screen.
   pinned. A changed certificate fails the connection rather than silently trusting it.
 - Ward will not send a password over a plaintext stream. STARTTLS is required unless the account
   explicitly uses the `none` transport (not exposed in the UI).
-- OMEMO/OpenPGP are not wired yet. Encrypted chats are marked, the UI explains the gap, and
-  sending is blocked when a chat explicitly asks for OMEMO or OpenPGP. New chats default to
-  unencrypted in this release so the app is usable; an open-lock indicator marks that state.
-  Do not use this build where confidentiality against the server is required.
+- One-to-one OMEMO 2 is implemented. Group OMEMO sending, legacy OMEMO 0.3 and OpenPGP are not;
+  an explicitly encrypted chat never falls back to plaintext without a visible error. New chats
+  default to unencrypted in this release so the app remains usable, and chat details show the
+  current state.
 - App lock uses Face ID/Touch ID and a four-digit passcode. The passcode is salted and hashed
   before being stored in the Keychain. The app shroud hides content in the app switcher.
 - iOS restricts long-lived background sockets. Ward keeps the connection while it is running and
@@ -169,8 +176,9 @@ and preserves full-text search without exposing a second schema to every screen.
 The simulator build is exercised by the GitHub Actions `iOS` workflow on every push, including
 launching the app in the simulator and generating App Store screenshots from demo data. The app
 is usable for plaintext one-to-one and group XMPP messaging, files, voice notes, administration
-and daily extras. OMEMO/OpenPGP, WebRTC call media and encrypted uploads are the remaining parity
-work; [PARITY.md](PARITY.md) tracks the full matrix.
+and daily extras, plus OMEMO 2 for one-to-one chats. Group OMEMO sending, legacy OMEMO 0.3,
+OpenPGP and WebRTC call media are the remaining parity work; [PARITY.md](PARITY.md) tracks the
+full matrix.
 
 ## Contributing
 

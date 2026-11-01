@@ -619,13 +619,13 @@ final class AppModel: ObservableObject {
     func setArchived(_ chat: Chat, _ value: Bool) async { await update(chat) { $0.archived = value } }
     func setEncryption(_ chat: Chat, _ value: EncryptionMode) async { await update(chat) { $0.encryption = value.rawValue } }
 
-    /// The mode the UI should show for a chat. A default chat uses the account-wide setting; this
-    /// build treats "always" as required-but-unavailable rather than silently falling back.
+    /// The mode the UI should show for a chat. A default chat uses the account-wide setting.
+    /// "Always" refuses to send if OMEMO cannot be set up; "When available" may fall back to
+    /// plaintext with an explicit warning.
     func effectiveEncryption(_ chat: Chat) -> EncryptionMode {
         if chat.encryptionMode != .default { return chat.encryptionMode }
         switch settings.string("encryption.default", "off") {
-        case "always": return .omemo
-        case "available": return .off
+        case "always", "available": return .omemo
         default: return .off
         }
     }

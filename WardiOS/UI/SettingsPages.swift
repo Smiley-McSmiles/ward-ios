@@ -565,7 +565,7 @@ struct AboutPage: View {
                 Text("Private messaging on the open XMPP network.").font(.subheadline).foregroundStyle(palette.secondaryText)
                 Text("Version 1.0.6 (iOS)").font(.caption).foregroundStyle(palette.tertiaryText)
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Ward is a native SwiftUI messenger built on the same protocols as Ward for GTK and Ward for Android. It speaks XMPP, includes OMEMO device management, and never routes your messages through a Ward server. The OMEMO ratchet itself is the next major piece of work.")
+                    Text("Ward is a native SwiftUI messenger built on the same protocols as Ward for GTK and Ward for Android. It speaks XMPP, encrypts one-to-one chats with its own MIT-licensed OMEMO 2 implementation, and never routes your messages through a Ward server.")
                         .font(.subheadline).foregroundStyle(palette.secondaryText)
                     Divider()
                     Link("Source code", destination: URL(string: "https://github.com/Smiley-McSmiles/Ward-Android")!)

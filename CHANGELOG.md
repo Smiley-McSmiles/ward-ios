@@ -12,6 +12,11 @@
   global search, Tenor GIF search, contact and location sharing.
 - File and image upload (XEP-0363), camera, Photos picker, Quick Look, video playback, voice
   messages and AES-GCM attachment decryption (XEP-0454).
+- OMEMO 2 (XEP-0384) for one-to-one chats through the new MIT-licensed `WardCrypto` package:
+  X3DH, Double Ratchet, SCE envelopes, bundles, prekeys, per-device sessions, trust filtering,
+  encrypted reactions/edits/retractions, own-other-device inclusion and encrypted attachments.
+- OMEMO interoperability tests against the independent `twomemo` Python backend in both
+  directions, including DH ratchets and out-of-order delivery.
 - Group topics, members, roles, affiliations, moderation, invites and bookmarks.
 - Server administration (XEP-0050), XML console and service discovery browser.
 - App lock with Face ID/passcode, privacy shroud, Keychain passwords and optional link previews.
@@ -19,6 +24,7 @@
 
 ### Known gaps
 
-- OMEMO 2, legacy OMEMO and OpenPGP message encryption are not wired yet.
+- Group OMEMO sending, legacy OMEMO 0.3 and OpenPGP message encryption are not implemented.
 - WebRTC audio/video media for calls is not wired yet.
-- Encrypted uploads are gated on stanza encryption; receive/decrypt is implemented.
+- OMEMO is verified against one independent backend; reports from Gajim, Conversations,
+  Dino, Monal and other clients are still welcome.

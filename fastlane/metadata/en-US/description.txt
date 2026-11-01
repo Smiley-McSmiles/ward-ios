@@ -5,6 +5,7 @@ Bring your own account and your own server. Ward speaks standard XMPP, so it wor
 WHY WARD
 • Your account, your server. Use any XMPP provider or host your own.
 • One-to-one and group chats, channels, replies, reactions, edits and receipts.
+• OMEMO 2 end-to-end encryption for one-to-one chats, with per-device sessions and verification.
 • Photos, files, video, voice messages and GIF search.
 • Markdown, code blocks, quotes, lists and tables rendered natively.
 • Scheduled sending, chat export, global search and link previews.
@@ -20,9 +21,9 @@ BUILT FOR IOS
 • Local notifications and unread badges while Ward is connected.
 
 PRIVACY
-Messages live on your device. Ward does not run a message server and does not collect your conversations. Your XMPP server can see metadata as with any XMPP client; use a server you trust or run your own. Link previews are optional and never include cookies or analytics. Read the privacy policy at the support link below.
+Messages live on your device. One-to-one chats can use OMEMO 2 end-to-end encryption, so keys stay on your devices. Ward does not run a message server and does not collect your conversations. Your XMPP server can see metadata as with any XMPP client; use a server you trust or run your own. Link previews are optional and never include cookies or analytics. Read the privacy policy at the support link below.
 
 OPEN SOURCE
-Ward for iOS is MIT-licensed. The source is on GitHub, including the XMPP stack, the SQLite history store and the SwiftUI interface.
+Ward for iOS is MIT-licensed. The source is on GitHub, including the XMPP stack, the SQLite history store, the SwiftUI interface and the MIT-licensed OMEMO 2 implementation.
 
 Ward is an independent client. XMPP is an open standard, and the XMPP name is used descriptively.

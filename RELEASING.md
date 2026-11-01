@@ -101,9 +101,9 @@ Before submission:
    `demo_password.txt` with a working test account on a server you control. Apps that require
    an account need a reviewer account.
 2. Replace the placeholder phone number and support email with real details.
-3. Review the description for claims that are not shipped. OMEMO/OpenPGP and call media are
-   explicitly marked as unfinished in `PARITY.md`; do not claim end-to-end encryption in the
-   listing until those land.
+3. Review the description for claims that are not shipped. One-to-one OMEMO 2 is implemented;
+   group OMEMO sending, legacy OMEMO 0.3, OpenPGP and call media are not. Do not claim group
+   encryption or OpenPGP in the listing. `PARITY.md` is the source of truth.
 
 Upload metadata with:
 
@@ -140,9 +140,11 @@ under the 6.9-inch iPhone and 13-inch iPad slots. The demo data never connects t
 - **Tracking:** No.
 - **Age rating:** Ward contains user-generated content and public group chats. A 12+/13+ rating
   is appropriate. Complete the current questionnaire in App Store Connect.
-- **Export compliance:** The app uses standard TLS and AES-GCM. `ITSAppUsesNonExemptEncryption`
-  is currently `false`. If you add OMEMO/OpenPGP or other non-exempt cryptography, review the
-  export classification with counsel and update this key and the App Store Connect answers.
+- **Export compliance:** The app now ships OMEMO 2 (X3DH, Double Ratchet) in addition to TLS and
+  AES-GCM. `ITSAppUsesNonExemptEncryption` is set to `true` as the conservative default. Before
+  shipping, determine whether an exemption (for example the mass-market provisions) applies,
+  file any required annual self-classification report, and only then change the key and the App
+  Store Connect answers. Do not copy the old `false` value without that review.
 
 ## 7. User-generated content requirements
 

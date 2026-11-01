@@ -9,3 +9,6 @@ xcuserdata/
 .swiftpm/
 .build/
 Packages/WardCrypto/.build/
+
+Interop/.build/
+Interop/work/

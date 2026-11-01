@@ -1,0 +1,38 @@
+name: OMEMO interop
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "Packages/WardCrypto/**"
+      - "Interop/**"
+      - ".github/workflows/omemo-interop.yml"
+  pull_request:
+    paths:
+      - "Packages/WardCrypto/**"
+      - "Interop/**"
+      - ".github/workflows/omemo-interop.yml"
+
+jobs:
+  twomemo:
+    name: twomemo <-> WardCrypto
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show Xcode version
+        run: xcodebuild -version
+      - name: Install reference backend
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install --upgrade pip
+          .venv/bin/pip install twomemo
+      - name: Build interop helper
+        run: swift build --package-path Interop
+      - name: Run interoperability checks
+        run: .venv/bin/python Interop/harness.py
+      - name: Upload interop work files on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: omemo-interop-work
+          path: Interop/work
