@@ -13,8 +13,6 @@ settings:
 targets:
   Ward:
     type: application
-    dependencies:
-      - package: WardCrypto
     platform: iOS
     sources:
       - path: WardiOS
@@ -31,7 +29,3 @@ targets:
         OTHER_LDFLAGS: "-lsqlite3"
     info:
       path: WardiOS/Info.plist
-
-packages:
-  WardCrypto:
-    path: Packages/WardCrypto

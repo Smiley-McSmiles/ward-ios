@@ -36,6 +36,7 @@
 		A84F724AC305D7537CEC7474 /* AdminService.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5864DCB9D60ED587945497C /* AdminService.swift */; };
 		A88378EB5F5055680B95F3DC /* CallsDevices.swift in Sources */ = {isa = PBXBuildFile; fileRef = BDED121107C04C23268BC340 /* CallsDevices.swift */; };
 		A08B6C17B4B29C3C7B082408 /* Namespaces.swift in Sources */ = {isa = PBXBuildFile; fileRef = B6A51FA17D8D35EE8DAF2508 /* Namespaces.swift */; };
+		AE1A866E8FCB887BFEC55C6D /* OMEMO.swift in Sources */ = {isa = PBXBuildFile; fileRef = B991ADA3A1CEB2EF133ADA48 /* OMEMO.swift */; };
 		AC97F2269809295D190C054B /* RosterActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5AA95D178DC101B43792E0 /* RosterActions.swift */; };
 		AFFB847E95E8576B117049E5 /* Transport.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB993158B0952A847BAB11BE /* Transport.swift */; };
 		AEC1D5ED938904554907036A /* XML.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00218558C6DF042A15686C5 /* XML.swift */; };
@@ -80,6 +81,7 @@
 		B5864DCB9D60ED587945497C /* AdminService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdminService.swift; sourceTree = "<group>"; };
 		BDED121107C04C23268BC340 /* CallsDevices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CallsDevices.swift; sourceTree = "<group>"; };
 		B6A51FA17D8D35EE8DAF2508 /* Namespaces.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Namespaces.swift; sourceTree = "<group>"; };
+		B991ADA3A1CEB2EF133ADA48 /* OMEMO.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OMEMO.swift; sourceTree = "<group>"; };
 		BA5AA95D178DC101B43792E0 /* RosterActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RosterActions.swift; sourceTree = "<group>"; };
 		BB993158B0952A847BAB11BE /* Transport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Transport.swift; sourceTree = "<group>"; };
 		B00218558C6DF042A15686C5 /* XML.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = XML.swift; sourceTree = "<group>"; };
@@ -151,6 +153,7 @@
 				B5864DCB9D60ED587945497C /* AdminService.swift */,
 				BDED121107C04C23268BC340 /* CallsDevices.swift */,
 				B6A51FA17D8D35EE8DAF2508 /* Namespaces.swift */,
+				B991ADA3A1CEB2EF133ADA48 /* OMEMO.swift */,
 				BA5AA95D178DC101B43792E0 /* RosterActions.swift */,
 				BB993158B0952A847BAB11BE /* Transport.swift */,
 				B00218558C6DF042A15686C5 /* XML.swift */,
@@ -264,6 +267,7 @@
 				A84F724AC305D7537CEC7474 /* AdminService.swift in Sources */,
 				A88378EB5F5055680B95F3DC /* CallsDevices.swift in Sources */,
 				A08B6C17B4B29C3C7B082408 /* Namespaces.swift in Sources */,
+				AE1A866E8FCB887BFEC55C6D /* OMEMO.swift in Sources */,
 				AC97F2269809295D190C054B /* RosterActions.swift in Sources */,
 				AFFB847E95E8576B117049E5 /* Transport.swift in Sources */,
 				AEC1D5ED938904554907036A /* XML.swift in Sources */,
