@@ -23,8 +23,12 @@ jobs:
         run: xcodebuild -version
       - name: Install reference backend
         run: |
+          brew install libsodium
           python3 -m venv .venv
           .venv/bin/pip install --upgrade pip
+          SODIUM="$(brew --prefix libsodium)"
+          export LDFLAGS="-L$SODIUM/lib"
+          export CPPFLAGS="-I$SODIUM/include"
           .venv/bin/pip install twomemo
       - name: Build interop helper
         run: swift build --package-path Interop
