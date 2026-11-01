@@ -1,4 +1,5 @@
 import Foundation
+import WardCrypto
 
 extension XMPPSession {
     // MARK: - Incoming messages
@@ -7,6 +8,13 @@ extension XMPPSession {
                         timestampOverride: Date? = nil, mam: Bool = false) async {
         guard isOnline else { return }
         if handleCallStanza(node, directionOverride: directionOverride) { return }
+        var node = node
+        let wasEncrypted = node.child("encrypted", xmlns: NS.omemo2) != nil
+        if let encrypted = node.child("encrypted", xmlns: NS.omemo2) {
+            guard let decrypted = await decryptOMEMO(encrypted, source: node) else { return }
+            node = decrypted
+            node.children.removeAll { $0.name == "body" }
+        }
         let type = node.attr("type", "chat")
         if type == "error" {
             onToast?("A message could not be delivered. Check the XML console for details.", true)
@@ -98,22 +106,6 @@ extension XMPPSession {
             return
         }
 
-        if isEncrypted && body.isEmpty {
-            let note = "This message is encrypted. This build of Ward for iOS cannot decrypt OMEMO or OpenPGP messages yet."
-            var message = Message(chatId: chat.id, stanzaId: node.attr("id", String.wardID()),
-                                  originId: node.attr("id", ""), sender: peer, senderJid: from,
-                                  senderName: contactName(peer), direction: 0,
-                                  timestamp: timestampOverride?.millis ?? Date().millis,
-                                  body: note, kind: MessageKind.system.rawValue,
-                                  encryption: node.child("encrypted", xmlns: NS.omemo2) != nil ? "omemo2" : "omemo")
-            message.status = 0
-            if let inserted = try? await database.insertMessage(message) {
-                onMessage?(inserted, chat)
-                _ = await touchChat(chat, message: inserted, outgoing: false)
-            }
-            return
-        }
-
         let stored = await storedContact(peer)
         var contact = roster[peer] ?? stored
         if contact == nil && !outgoing {
@@ -152,7 +144,7 @@ extension XMPPSession {
                               senderName: outgoing ? account.displayName : contactName(peer),
                               direction: outgoing ? 1 : 0, timestamp: timestamp,
                               body: cleanBody, isMarkdown: node.child("markdown", xmlns: NS.markdown) != nil,
-                              kind: kind, encryption: isEncrypted ? "omemo" : "",
+                              kind: kind, encryption: wasEncrypted ? "omemo2" : "",
                               edited: false, retracted: false,
                               replyTo: reply?.attr("id", "") ?? "",
                               replyPreview: replyPreview(body: body, reply: reply),
@@ -418,7 +410,17 @@ extension XMPPSession {
             guard let data = try? Data(contentsOf: fileURL) else {
                 throw WardError.network("The attachment could not be read.")
             }
-            let url = try await upload(data: data, name: name, mime: mime)
+            let encryptAttachment = omemoRequired(chat)
+                || (chat.encryptionMode == .default && settings.string("encryption.default", "off") == "always")
+            let url: String
+            if encryptAttachment {
+                let sealed = try FileCrypto.encrypt(data)
+                let https = try await upload(data: sealed.ciphertext, name: name, mime: "application/octet-stream")
+                url = FileCrypto.aesgcmURL(httpsURL: https, key: sealed.key, iv: sealed.iv)
+                attachment.encrypted = true
+            } else {
+                url = try await upload(data: data, name: name, mime: mime)
+            }
             attachment.url = url
             attachment.localPath = fileURL.path
             message.attachments = [attachment]
@@ -457,19 +459,44 @@ extension XMPPSession {
         }
         var message = original
         let defaultMode = settings.string("encryption.default", "off")
-        let needsEncryption = chat.encryptionMode == .omemo || chat.encryptionMode == .pgp
-            || (chat.encryptionMode == .default && defaultMode == "always")
-        if needsEncryption {
+        if chat.encryptionMode == .pgp {
             message.status = -1
-            message.error = "This build of Ward for iOS cannot encrypt with OMEMO or OpenPGP yet. Set this chat to Off in chat details to send unencrypted."
+            message.error = "OpenPGP is not available in this build."
             try? await database.updateMessage(message)
             onMessageChanged?(message)
             onToast?(message.error, true)
             return
         }
-        if chat.encryptionMode == .default && defaultMode == "available" && !warnedAboutEncryption {
-            warnedAboutEncryption = true
-            onToast?("OMEMO is not available in this build. This chat is being sent unencrypted.", true)
+        if omemoRequired(chat) || (chat.encryptionMode == .default && defaultMode == "available" && omemo != nil) {
+            do {
+                let content = messageContentXML(message, chat: chat)
+                let sent = try await encryptAndSend(chat, contentXML: content,
+                                                    messageId: message.stanzaId.isEmpty ? String.wardID() : message.stanzaId)
+                if sent {
+                    message.status = 1
+                    message.error = ""
+                    message.encryption = "omemo2"
+                    try? await database.updateMessage(message)
+                    onMessageChanged?(message)
+                } else {
+                    throw WardCryptoError.encryption("The OMEMO message could not be sent.")
+                }
+                return
+            } catch {
+                if chat.encryptionMode == .default && defaultMode == "available" {
+                    if !warnedAboutEncryption {
+                        warnedAboutEncryption = true
+                        onToast?("No OMEMO devices were available; this message is being sent unencrypted.", true)
+                    }
+                } else {
+                    message.status = -1
+                    message.error = "OMEMO failed: \(error.localizedDescription)"
+                    try? await database.updateMessage(message)
+                    onMessageChanged?(message)
+                    onToast?(message.error, true)
+                    return
+                }
+            }
         }
         if chat.isGroup && !joinedRooms.contains(chat.jid) {
             message.status = -1
@@ -556,6 +583,10 @@ extension XMPPSession {
         try? await database.updateMessage(updated)
         onMessageChanged?(updated)
         let type = chat.isGroup ? "groupchat" : "chat"
+        let emojis = alreadyMine ? [] : [emoji]
+        if omemoRequired(chat) || (chat.encryptionMode == .default && settings.string("encryption.default", "off") == "always") {
+            if await sendEncryptedReaction(chat: chat, target: target, emojis: emojis) { return }
+        }
         let reactions = alreadyMine
             ? "<reactions xmlns='\(NS.reactions)' id='\(XML.escape(target))'/>"
             : "<reactions xmlns='\(NS.reactions)' id='\(XML.escape(target))'><reaction>\(XML.escape(emoji))</reaction></reactions>"
@@ -571,6 +602,9 @@ extension XMPPSession {
         try? await database.updateMessage(updated)
         onMessageChanged?(updated)
         let type = chat.isGroup ? "groupchat" : "chat"
+        if omemoRequired(chat) || (chat.encryptionMode == .default && settings.string("encryption.default", "off") == "always") {
+            if await sendEncryptedEdit(chat: chat, target: target, text: text) { return }
+        }
         let xml = "<message to='\(XML.escape(chat.jid))' type='\(type)'><body>\(XML.escape(text))</body><replace xmlns='\(NS.correct)' id='\(XML.escape(target))'/><origin-id xmlns='\(NS.sid)' id='\(String.wardID())'/><store xmlns='\(NS.hints)'/></message>"
         _ = connection?.send(xml)
     }
@@ -585,6 +619,9 @@ extension XMPPSession {
         try? await database.updateMessage(updated)
         onMessageChanged?(updated)
         let type = chat.isGroup ? "groupchat" : "chat"
+        if omemoRequired(chat) || (chat.encryptionMode == .default && settings.string("encryption.default", "off") == "always") {
+            if await sendEncryptedRetraction(chat: chat, target: target) { return }
+        }
         let xml = "<message to='\(XML.escape(chat.jid))' type='\(type)'><retract xmlns='\(NS.retract)' id='\(XML.escape(target))'/><origin-id xmlns='\(NS.sid)' id='\(String.wardID())'/><store xmlns='\(NS.hints)'/></message>"
         _ = connection?.send(xml)
     }

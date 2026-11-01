@@ -1,4 +1,5 @@
 import Foundation
+import WardCrypto
 
 /// High-level XMPP session for one account. It owns the wire connection, translates stanzas into
 /// the same entities the Android app stores, and keeps the local database in sync.
@@ -32,6 +33,9 @@ final class XMPPSession {
     var vcardRequested: Set<String> = []
     var activeCall: CallState?
     var avatarHashes: [String: String] = [:]
+    var omemo: OMEMOEngine?
+    var omemoBundleCache: [String: (date: Date, bundles: [OMEMOBundle])] = [:]
+    var omemoPublishFailureShown = false
 
     // Event callbacks. The app model installs these once and reacts on the main actor.
     var onStateChange: ((ConnectionState) -> Void)?
@@ -148,6 +152,7 @@ final class XMPPSession {
     // MARK: - Bootstrap
 
     private func bootstrap() async {
+        await setupOMEMO()
         sendPresence(show: lastPresenceShow, status: lastPresenceStatus)
         await syncRoster()
         enableCarbons()

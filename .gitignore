@@ -7,3 +7,5 @@ xcuserdata/
 *.dSYM.zip
 *.dSYM
 .swiftpm/
+.build/
+Packages/WardCrypto/.build/

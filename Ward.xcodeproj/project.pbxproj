@@ -47,6 +47,9 @@
 		AC35C55EF0E82819AE28F7C5 /* ringtone.m4a in Resources */ = {isa = PBXBuildFile; fileRef = BF266AA7F5759197ED3896F5 /* ringtone.m4a */; };
 		A1553AA4DD0B412865B8F49C /* ringback.m4a in Resources */ = {isa = PBXBuildFile; fileRef = BCF11E23FEB6D634B2F75F3E /* ringback.m4a */; };
 		AF95A8B11BA29317BD222241 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = B353411880D75017C44C5F62 /* PrivacyInfo.xcprivacy */; };
+		A00000000000000000000009 /* WardCrypto in Frameworks */ = {isa = PBXBuildFile; productRef = F00000000000000000000002 /* WardCrypto */; };
+		F00000000000000000000001 /* XCLocalSwiftPackageReference "Packages/WardCrypto" */ = {isa = XCLocalSwiftPackageReference; relativePath = Packages/WardCrypto; };
+		F00000000000000000000002 /* XCSwiftPackageProductDependency */ = {isa = XCSwiftPackageProductDependency; package = F00000000000000000000001 /* XCLocalSwiftPackageReference "Packages/WardCrypto" */; productName = WardCrypto; };
 		BAD351C399405B4B33F52CF1 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		B3C030D76F7E71FD20F58DF1 /* WardApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WardApp.swift; sourceTree = "<group>"; };
 		BC90DE5F0FF7459DF96B5797 /* Components.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Components.swift; sourceTree = "<group>"; };
@@ -286,6 +289,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A00000000000000000000009 /* WardCrypto in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -477,6 +481,9 @@
 			dependencies = (
 			);
 			name = Ward;
+			packageProductDependencies = (
+				F00000000000000000000002 /* WardCrypto */,
+			);
 			productName = Ward;
 			productReference = BCE3D2CF23C64F705D9895AF /* Ward.app */;
 			productType = "com.apple.product-type.application";
@@ -502,6 +509,9 @@
 				Base,
 			);
 			mainGroup = C7E3C32BF75F587CD7E046B4;
+			packageReferences = (
+				F00000000000000000000001 /* XCLocalSwiftPackageReference "Packages/WardCrypto" */,
+			);
 			productRefGroup = CD83A561CD747EDCF660E307 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";

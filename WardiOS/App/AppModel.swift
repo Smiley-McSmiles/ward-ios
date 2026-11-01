@@ -307,6 +307,10 @@ final class AppModel: ObservableObject {
         SecureStore.shared.remove("password.\(account.jid)")
         UserDefaults.standard.removeObject(forKey: "ward.mam.since.\(account.id)")
         UserDefaults.standard.removeObject(forKey: "ward.mam.uid.\(account.id)")
+        let omemoFile = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("OMEMO", isDirectory: true)
+            .appendingPathComponent("account-\(account.id).json")
+        try? FileManager.default.removeItem(at: omemoFile)
         try? await database.deleteAccount(id: account.id)
         accounts.removeAll { $0.id == account.id }
         contacts.removeAll { $0.accountId == account.id }
