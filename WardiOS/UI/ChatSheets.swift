@@ -113,10 +113,11 @@ struct ChatDetailsSheet: View {
                         Label(mode == .omemo || mode == .pgp ? "\(mode.label) (not available)" : mode.label,
                               systemImage: current.encryptionMode == mode ? "checkmark" : "")
                     }
+                    .disabled(mode == .omemo || mode == .pgp)
                 }
             } label: {
                 DetailRow(icon: "lock.shield.fill", color: palette.success, title: "Encryption",
-                          value: current.encryptionMode.label)
+                          value: app.effectiveEncryption(current).label)
             }
             Divider().padding(.leading, 50)
             Menu {

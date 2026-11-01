@@ -83,7 +83,8 @@ cookies or analytics.
 
 The OMEMO/OpenPGP ratchets and WebRTC media are the remaining large engineering pieces. The UI
 does not silently downgrade an explicitly encrypted chat: sending OMEMO or OpenPGP is blocked
-until the ratchet is wired, and new unencrypted chats show a visible warning.
+until the ratchet is wired; new chats default to Off in this build so the app remains usable,
+and the chat details make that state explicit.
 
 ## Requirements
 

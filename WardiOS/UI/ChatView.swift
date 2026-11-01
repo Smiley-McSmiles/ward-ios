@@ -171,18 +171,6 @@ struct ChatView: View {
                 }
             }
             ToolbarItem(placement: .topBarTrailing) {
-                if chat?.isGroup == false {
-                    Menu {
-                        Button { if let chat { app.startCall(chat, video: false) } } label: {
-                            Label("Audio call", systemImage: "phone")
-                        }
-                        Button { if let chat { app.startCall(chat, video: true) } } label: {
-                            Label("Video call", systemImage: "video")
-                        }
-                    } label: {
-                        Image(systemName: "phone")
-                    }
-                }
                 Button { showSearch = true } label: { Image(systemName: "magnifyingglass") }
             }
         }

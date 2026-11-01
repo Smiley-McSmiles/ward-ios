@@ -120,6 +120,7 @@ struct RootView: View {
             screenCaptured = UIScreen.main.isCaptured && app.settings.bool("security.block_screenshots")
         }
         .preferredColorScheme(preferredScheme)
+        .animation(.easeInOut(duration: 0.25), value: app.settings.string("appearance.style", "system"))
     }
 
     private var preferredScheme: ColorScheme? {

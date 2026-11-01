@@ -306,6 +306,7 @@ extension XMPPSession {
     /// reconnect does not skip messages that arrived while the app was closed. If a server rejects
     /// an old cursor, fall back to a seven-day window once instead of failing forever.
     func syncRecentArchive() async {
+        guard isOnline else { return }
         let defaults = UserDefaults.standard
         let syncKey = "ward.mam.since.\(accountId)"
         let uidKey = "ward.mam.uid.\(accountId)"
@@ -378,6 +379,7 @@ extension XMPPSession {
     }
 
     func resyncAll() async -> String {
+        guard isOnline else { return "The account is offline." }
         let chats = ((try? await database.chats()) ?? []).filter { $0.accountId == accountId && $0.open }
         guard !chats.isEmpty else { return "No chats to re-sync." }
         var count = 0

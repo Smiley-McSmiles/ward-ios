@@ -44,6 +44,11 @@ struct MainView: View {
         .onReceive(NotificationCenter.default.publisher(for: .wardOpenChat)) { _ in
             withAnimation(.snappy) { tab = .chats }
         }
+        .onChange(of: tab) { _, value in
+            if value != .chats && app.selectedChatId != nil {
+                app.selectChat(nil)
+            }
+        }
     }
 
     @ViewBuilder private var content: some View {

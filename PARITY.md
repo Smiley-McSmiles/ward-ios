@@ -31,9 +31,9 @@ instead of pretending a feature works.
 | Preferences generated from a typed schema | Yes, same groups and defaults (desktop-only switches omitted) |
 | OMEMO device fingerprints, trust, BTBV | Device lists with trust/distrust/forget; fingerprints appear when a bundle is fetched. The ratchet itself is not wired |
 | Encrypted files (XEP-0454 aesgcm) | Receiving and decryption yes. Encrypted upload stays gated on stanza encryption so the key never travels in plaintext |
-| OMEMO 2 / SCE, legacy OMEMO 0.3 | Not yet. Explicitly encrypted chats refuse to send rather than downgrade |
+| OMEMO 2 / SCE, legacy OMEMO 0.3 | Not yet. New chats default to Off in this build; explicitly encrypted chats refuse to send rather than downgrade. Device lists and bundle fingerprints are available |
 | OpenPGP (XEP-0373/0374) | Not yet |
-| Audio/video calls (Jingle, WebRTC, XEP-0353) | JMI propose/accept/reject/finish signalling and the full call UI; audio/video media is not wired |
+| Audio/video calls (Jingle, WebRTC, XEP-0353) | JMI propose/accept/reject/finish signalling exists, but audio/video media is not wired; the call entry point is disabled and incoming proposals show a notice |
 | Scheduled send, Tenor GIFs, location and contact sharing | Yes: scheduled messages survive relaunch, Tenor search, vCard text and OpenStreetMap location links |
 | Chat export, global search, link previews | Yes: global search from the chat list, HTML export from chat details, optional Open Graph previews |
 
