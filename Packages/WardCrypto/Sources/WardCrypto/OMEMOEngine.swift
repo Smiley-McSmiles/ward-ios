@@ -26,6 +26,7 @@ public final class OMEMOEngine {
             try save()
         }
         try identity.replenishPreKeys()
+        try save()
     }
 
     public var deviceId: UInt32 { identity.deviceId }
@@ -186,6 +187,10 @@ public final class OMEMOEngine {
         }
 
         guard let payloadBase64 else {
+            // An OMEMO message without a payload is the empty confirmation message: 32 zero bytes.
+            guard plaintext.count == 32, plaintext.allSatisfy({ $0 == 0 }) else {
+                throw WardCryptoError.invalidMessage("Malformed empty OMEMO message.")
+            }
             return OMEMODecrypted(senderDeviceId: senderDevice, senderIdentity: identityKey,
                                   envelopeXML: nil, contentXML: nil)
         }

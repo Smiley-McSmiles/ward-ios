@@ -21,27 +21,32 @@ extension XMPPSession {
 
     func publishOMEMOProfile() async {
         guard let engine = omemo, isOnline else { return }
-        var existing: [UInt32] = []
-        guard let listResult = await iqRequest("<pubsub xmlns='http://jabber.org/protocol/pubsub'><items node='\(NS.omemo2):devices'/></pubsub>",
-                                               to: account.bareJID, timeout: 15) else {
-            // Never replace another device's list with a list we could not read.
-            return
-        }
-        if listResult.attr("type") == "error" {
-            // A brand new account has no device list yet. Any other error must not clobber it.
-            guard listResult.child("error")?.child("item-not-found") != nil else { return }
-        } else if let items = listResult.child("pubsub")?.child("items") {
-            for item in items.children("item") {
-                for device in item.child("devices", xmlns: NS.omemo2)?.children("device") ?? [] {
-                    if let value = device.attr("id").flatMap(UInt32.init) { existing.append(value) }
+        // Read the existing device list so another device is not dropped. If the read fails for
+        // any reason other than "no list yet", skip only the list publish and still publish this
+        // device's bundle.
+        var existing: [UInt32]?
+        if let listResult = await iqRequest("<pubsub xmlns='http://jabber.org/protocol/pubsub'><items node='\(NS.omemo2):devices'/></pubsub>",
+                                            to: account.bareJID, timeout: 15) {
+            if listResult.attr("type") == "error" {
+                if listResult.child("error")?.child("item-not-found") != nil { existing = [] }
+            } else if let items = listResult.child("pubsub")?.child("items") {
+                existing = []
+                for item in items.children("item") {
+                    for device in item.child("devices", xmlns: NS.omemo2)?.children("device") ?? [] {
+                        if let value = device.attr("id").flatMap(UInt32.init) { existing?.append(value) }
+                    }
                 }
+            } else {
+                existing = []
             }
         }
-        let deviceXML = engine.deviceListXML(including: existing)
-        let deviceOptions = optionsXML(accessModel: "open", maxItems: "1")
-        _ = await iqRequest("""
-        <pubsub xmlns='http://jabber.org/protocol/pubsub'><publish node='\(NS.omemo2):devices'><item id='current'>\(deviceXML)</item></publish>\(deviceOptions)</pubsub>
-        """, to: account.bareJID, type: "set", timeout: 20)
+        if let existing {
+            let deviceXML = engine.deviceListXML(including: existing)
+            let deviceOptions = optionsXML(accessModel: "open", maxItems: "1")
+            _ = await iqRequest("""
+            <pubsub xmlns='http://jabber.org/protocol/pubsub'><publish node='\(NS.omemo2):devices'><item id='current'>\(deviceXML)</item></publish>\(deviceOptions)</pubsub>
+            """, to: account.bareJID, type: "set", timeout: 20)
+        }
 
         let bundleXML = engine.bundleXML()
         let bundleOptions = optionsXML(accessModel: "open", maxItems: "max")
@@ -87,7 +92,8 @@ extension XMPPSession {
             await recordOMEMODevice(jid: bare, bundle: bundle)
             bundles.append(bundle)
         }
-        omemoBundleCache[bare] = (Date(), bundles)
+        // Do not cache an empty result: a contact may publish devices moments after a failed lookup.
+        if !bundles.isEmpty { omemoBundleCache[bare] = (Date(), bundles) }
         return await trustedOMEMOBundles(bundles, jid: bare)
     }
 
