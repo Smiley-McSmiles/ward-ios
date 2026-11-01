@@ -13,7 +13,10 @@ extension XMPPSession {
         if let encrypted = node.child("encrypted", xmlns: NS.omemo2) {
             guard let decrypted = await decryptOMEMO(encrypted, source: node) else { return }
             node = decrypted
-            node.children.removeAll { $0.name == "body" }
+        } else if node.child("encrypted", xmlns: NS.omemo) != nil
+                    || node.child("openpgp", xmlns: NS.openpgp) != nil {
+            onToast?("This message uses legacy OMEMO or OpenPGP, which this build cannot decrypt.", true)
+            return
         }
         let type = node.attr("type", "chat")
         if type == "error" {
@@ -458,6 +461,7 @@ extension XMPPSession {
             return
         }
         var message = original
+        let id = message.stanzaId.isEmpty ? String.wardID() : message.stanzaId
         let defaultMode = settings.string("encryption.default", "off")
         if chat.encryptionMode == .pgp {
             message.status = -1
@@ -470,12 +474,12 @@ extension XMPPSession {
         if omemoRequired(chat) || (chat.encryptionMode == .default && defaultMode == "available" && omemo != nil) {
             do {
                 let content = messageContentXML(message, chat: chat)
-                let sent = try await encryptAndSend(chat, contentXML: content,
-                                                    messageId: message.stanzaId.isEmpty ? String.wardID() : message.stanzaId)
+                let sent = try await encryptAndSend(chat, contentXML: content, messageId: id)
                 if sent {
                     message.status = 1
                     message.error = ""
                     message.encryption = "omemo2"
+                    message.stanzaId = id
                     try? await database.updateMessage(message)
                     onMessageChanged?(message)
                 } else {
@@ -486,7 +490,7 @@ extension XMPPSession {
                 if chat.encryptionMode == .default && defaultMode == "available" {
                     if !warnedAboutEncryption {
                         warnedAboutEncryption = true
-                        onToast?("No OMEMO devices were available; this message is being sent unencrypted.", true)
+                        onToast?("OMEMO is unavailable for this message; it is being sent unencrypted.", true)
                     }
                 } else {
                     message.status = -1
@@ -505,7 +509,6 @@ extension XMPPSession {
             onMessageChanged?(message)
             return
         }
-        let id = message.stanzaId.isEmpty ? String.wardID() : message.stanzaId
         var body = message.body
         var children: [String] = []
         if !message.replyTo.isEmpty {

@@ -23,14 +23,18 @@ extension XMPPSession {
         guard let engine = omemo, isOnline else { return }
         var existing: [UInt32] = []
         guard let listResult = await iqRequest("<pubsub xmlns='http://jabber.org/protocol/pubsub'><items node='\(NS.omemo2):devices'/></pubsub>",
-                                               to: account.bareJID, timeout: 15),
-              let items = listResult.child("pubsub")?.child("items") else {
+                                               to: account.bareJID, timeout: 15) else {
             // Never replace another device's list with a list we could not read.
             return
         }
-        for item in items.children("item") {
-            for device in item.child("devices", xmlns: NS.omemo2)?.children("device") ?? [] {
-                if let value = device.attr("id").flatMap(UInt32.init) { existing.append(value) }
+        if listResult.attr("type") == "error" {
+            // A brand new account has no device list yet. Any other error must not clobber it.
+            guard listResult.child("error")?.child("item-not-found") != nil else { return }
+        } else if let items = listResult.child("pubsub")?.child("items") {
+            for item in items.children("item") {
+                for device in item.child("devices", xmlns: NS.omemo2)?.children("device") ?? [] {
+                    if let value = device.attr("id").flatMap(UInt32.init) { existing.append(value) }
+                }
             }
         }
         let deviceXML = engine.deviceListXML(including: existing)
@@ -59,7 +63,7 @@ extension XMPPSession {
     func fetchOMEMOBundles(jid: String) async -> [OMEMOBundle] {
         let bare = JID.bare(jid)
         if let cached = omemoBundleCache[bare], Date().timeIntervalSince(cached.date) < 300 {
-            return cached.bundles
+            return await trustedOMEMOBundles(cached.bundles, jid: bare)
         }
         guard let result = await iqRequest("<pubsub xmlns='http://jabber.org/protocol/pubsub'><items node='\(NS.omemo2):devices'/></pubsub>",
                                            to: bare, timeout: 20),
@@ -67,9 +71,11 @@ extension XMPPSession {
         var ids: [UInt32] = []
         for item in items.children("item") {
             for device in item.child("devices", xmlns: NS.omemo2)?.children("device") ?? [] {
-                if let id = device.attr("id").flatMap(UInt32.init), id != omemo?.deviceId {
-                    ids.append(id)
-                }
+                guard let id = device.attr("id").flatMap(UInt32.init) else { continue }
+                // Device ids are only unique per account: never skip a contact's device just
+                // because it happens to share this device's numeric id.
+                if bare == account.bareJID && id == omemo?.deviceId { continue }
+                ids.append(id)
             }
         }
         var bundles: [OMEMOBundle] = []
@@ -78,11 +84,18 @@ extension XMPPSession {
             guard let response = await iqRequest(request, to: bare, timeout: 20),
                   let item = response.child("pubsub")?.child("items")?.children("item").first,
                   let bundle = parseBundle(item, deviceId: deviceId) else { continue }
-            bundles.append(bundle)
             await recordOMEMODevice(jid: bare, bundle: bundle)
+            bundles.append(bundle)
         }
         omemoBundleCache[bare] = (Date(), bundles)
-        return bundles
+        return await trustedOMEMOBundles(bundles, jid: bare)
+    }
+
+    private func trustedOMEMOBundles(_ bundles: [OMEMOBundle], jid: String) async -> [OMEMOBundle] {
+        let devices = (try? await database.devices(accountId: accountId, jid: jid)) ?? []
+        let distrusted = Set(devices.filter { $0.protocolName == "omemo2" && $0.trust == "distrusted" }
+            .map { UInt32(truncatingIfNeeded: $0.deviceId) })
+        return bundles.filter { !distrusted.contains($0.deviceId) }
     }
 
     private func parseBundle(_ item: XMLNode, deviceId: UInt32) -> OMEMOBundle? {
@@ -113,7 +126,7 @@ extension XMPPSession {
         }
         let trust: String
         if let existing {
-            trust = existing.trust
+            trust = existing.fingerprint == fingerprint ? existing.trust : "undecided"
         } else {
             trust = settings.string("encryption.trust", "btbv") == "btbv" ? "trusted" : "undecided"
         }
@@ -131,7 +144,7 @@ extension XMPPSession {
             $0.deviceId == Int64(deviceId) && $0.protocolName == "omemo2"
         }
         let trust: String
-        if let existing { trust = existing.trust }
+        if let existing { trust = existing.fingerprint == fingerprint ? existing.trust : "undecided" }
         else { trust = settings.string("encryption.trust", "btbv") == "btbv" ? "trusted" : "undecided" }
         let device = Device(accountId: accountId, jid: jid, deviceId: Int64(deviceId),
                             fingerprint: fingerprint, label: "Device \(deviceId)",
@@ -224,6 +237,21 @@ extension XMPPSession {
         return (try? await encryptAndSend(chat, contentXML: content, messageId: String.wardID())) ?? false
     }
 
+    /// Sends the empty OMEMO message that tells the initiator their session is confirmed. Some
+    /// clients keep repeating the X3DH header until they receive one of these.
+    func sendOMEMOConfirmation(senderJID: String, deviceId: UInt32) async {
+        guard let engine = omemo, senderJID != account.bareJID,
+              let key = try? engine.confirmation(senderJID: senderJID, deviceId: deviceId) else { return }
+        let kex = key.keyExchange ? " kex='true'" : ""
+        let stanza = """
+        <message to='\(XML.escape(senderJID))' type='chat' id='\(String.wardID())'>\
+        <encrypted xmlns='\(NS.omemo2)'><header sid='\(engine.deviceId)'><keys jid='\(XML.escape(senderJID))'>\
+        <key rid='\(deviceId)'\(kex)>\(key.data)</key></keys></header></encrypted>\
+        <store xmlns='\(NS.hints)'/></message>
+        """
+        _ = connection?.send(stanza)
+    }
+
     // MARK: - Decryption
 
     func decryptOMEMO(_ encrypted: XMLNode, source: XMLNode) async -> XMLNode? {
@@ -241,16 +269,33 @@ extension XMPPSession {
         let kex = key.attr("kex", "false") == "true"
         let payload = encrypted.child("payload")?.trimmedText
         let senderJID = JID.bare(source.attr("from", ""))
+        let trust = (try? await database.devices(accountId: accountId, jid: senderJID))?
+            .first { $0.deviceId == Int64(sid) && $0.protocolName == "omemo2" }?.trust
+        if trust == "distrusted" {
+            onToast?("Ignored a message from a distrusted OMEMO device.", true)
+            onXml?(false, "Ignored OMEMO message from distrusted \(senderJID)/\(sid)")
+            return nil
+        }
         do {
             guard let decrypted = try engine.decrypt(keyBase64: keyData, keyExchange: kex,
                                                      senderJID: senderJID, senderDevice: sid,
                                                      payloadBase64: payload) else { return nil }
             await recordOMEMOIdentity(jid: senderJID, deviceId: sid, identityKey: decrypted.senderIdentity)
-            if kex { Task { await self.publishOMEMOProfile() } }
+            if kex {
+                Task { await self.publishOMEMOProfile() }
+                // Group messages are addressed to the room; a confirmation only makes sense 1:1.
+                if source.attr("type", "chat") != "groupchat" {
+                    await self.sendOMEMOConfirmation(senderJID: senderJID, deviceId: sid)
+                }
+            }
             guard let contentXML = decrypted.contentXML,
                   let root = XML.parse("<content>\(contentXML)</content>") else { return nil }
             var effective = source
-            effective.children.removeAll { $0.name == "encrypted" }
+            // Drop the outer cleartext fallback body and encryption hints; only authenticated
+            // content from inside the SCE envelope may reach the message pipeline.
+            effective.children.removeAll {
+                $0.name == "encrypted" || $0.name == "body" || $0.name == "encryption"
+            }
             effective.children.append(contentsOf: root.children)
             return effective
         } catch {

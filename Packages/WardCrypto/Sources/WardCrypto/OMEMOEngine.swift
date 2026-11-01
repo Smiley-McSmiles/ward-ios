@@ -4,6 +4,9 @@ import Foundation
 /// OMEMO wire encoding. The XMPP layer supplies bundles and carries the resulting keys; this type
 /// never performs network I/O and never falls back to plaintext.
 public final class OMEMOEngine {
+    /// XEP-0384 mandates prefixing the X3DH HKDF input with 32 bytes of 0xFF.
+    static let x3dhPadding = Data(repeating: 0xFF, count: 32)
+
     public private(set) var identity: OMEMOIdentity
     private var sessions: [String: OMEMOSessionRecord]
     private let storeURL: URL?
@@ -65,6 +68,12 @@ public final class OMEMOEngine {
 
     public func hasSession(jid: String, deviceId: UInt32) -> Bool {
         sessions[sessionKey(jid: jid, deviceId: deviceId)] != nil
+    }
+
+    /// Removes a ratchet session so a reinstalled or re-verified device can perform a new X3DH.
+    public func forgetSession(jid: String, deviceId: UInt32) {
+        sessions.removeValue(forKey: sessionKey(jid: jid, deviceId: deviceId))
+        try? save()
     }
 
     public func encrypt(contentXML: String, recipients: [OMEMORecipient], fromJID: String) throws -> OMEMOOutgoing {
@@ -140,8 +149,11 @@ public final class OMEMOEngine {
 
         if keyExchange {
             let exchange = try OMEMOKeyExchange.decode(keyData)
-            if var existing = sessions[sessionKey], existing.remoteIdentityKey == exchange.identityKey,
-               existing.remoteKexEphemeral == exchange.ephemeralKey,
+            if let existing = sessions[sessionKey], existing.remoteIdentityKey != exchange.identityKey {
+                // Never silently replace a known identity. The user must remove and re-verify the device.
+                throw WardCryptoError.authentication("The OMEMO identity key for this device changed.")
+            }
+            if var existing = sessions[sessionKey], existing.remoteKexEphemeral == exchange.ephemeralKey,
                existing.ratchet.remotePublic != nil {
                 // A sender repeats the X3DH header until it receives a reply. Keep the existing
                 // ratchet instead of rebuilding and consuming the prekey again.
@@ -212,7 +224,7 @@ public final class OMEMOEngine {
         let dh2 = try CryptoPrimitives.dh(secretKey: ephemeral.secretKey, publicKey: remoteIdentityX)
         let dh3 = try CryptoPrimitives.dh(secretKey: ephemeral.secretKey, publicKey: bundle.signedPreKey)
         let dh4 = try CryptoPrimitives.dh(secretKey: ephemeral.secretKey, publicKey: prekey.publicKey)
-        let shared = CryptoPrimitives.hkdf(ikm: dh1 + dh2 + dh3 + dh4,
+        let shared = CryptoPrimitives.hkdf(ikm: Self.x3dhPadding + dh1 + dh2 + dh3 + dh4,
                                            salt: Data(repeating: 0, count: 32),
                                            info: "OMEMO X3DH", count: 32)
         let ad = identity.identity.publicKey + bundle.identityKey
@@ -244,7 +256,7 @@ public final class OMEMOEngine {
         let dh2 = try CryptoPrimitives.dh(secretKey: ownIdentityX, publicKey: exchange.ephemeralKey)
         let dh3 = try CryptoPrimitives.dh(secretKey: identity.signedPreKey.secretKey, publicKey: exchange.ephemeralKey)
         let dh4 = try CryptoPrimitives.dh(secretKey: prekey.secretKey, publicKey: exchange.ephemeralKey)
-        let shared = CryptoPrimitives.hkdf(ikm: dh1 + dh2 + dh3 + dh4,
+        let shared = CryptoPrimitives.hkdf(ikm: Self.x3dhPadding + dh1 + dh2 + dh3 + dh4,
                                            salt: Data(repeating: 0, count: 32),
                                            info: "OMEMO X3DH", count: 32)
         let ad = exchange.identityKey + identity.identity.publicKey
@@ -261,11 +273,14 @@ public final class OMEMOEngine {
                                   remoteKexEphemeral: exchange.ephemeralKey)
     }
 
+    func extractContentForTesting(_ envelope: String) -> String? { extractContent(envelope) }
+
     private func extractContent(_ envelope: String) -> String? {
-        guard let start = envelope.range(of: "<content>"),
+        guard let open = envelope.range(of: "<content"),
+              let openEnd = envelope[open.upperBound...].firstIndex(of: ">"),
               let end = envelope.range(of: "</content>", options: .backwards),
-              start.upperBound <= end.lowerBound else { return nil }
-        return String(envelope[start.upperBound..<end.lowerBound])
+              openEnd < end.lowerBound else { return nil }
+        return String(envelope[envelope.index(after: openEnd)..<end.lowerBound])
     }
 
     private func sessionKey(jid: String, deviceId: UInt32) -> String {

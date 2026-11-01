@@ -66,21 +66,36 @@ public struct RatchetState: Codable, Equatable {
 
     public mutating func decrypt(_ authenticated: AuthenticatedRatchetMessage,
                                  associatedData: Data) throws -> Data {
+        // Work on a copy and only commit the advanced ratchet state after authentication succeeds.
+        // Otherwise a forged or corrupted stanza could consume message keys and desynchronise the session.
+        var working = self
+        let plaintext = try working.decryptAdvancing(authenticated, associatedData: associatedData)
+        self = working
+        return plaintext
+    }
+
+    private mutating func decryptAdvancing(_ authenticated: AuthenticatedRatchetMessage,
+                                           associatedData: Data) throws -> Data {
         let header = try RatchetHeader.decode(authenticated.message)
         guard header.ciphertext != nil else {
             throw WardCryptoError.invalidMessage("The OMEMO ratchet message has no ciphertext.")
         }
 
-        if let remotePublic, header.dhPublic == remotePublic, header.messageNumber < receiveCount {
-            guard let index = skipped.firstIndex(where: { $0.dhPublic == header.dhPublic && $0.messageNumber == header.messageNumber }) else {
-                throw WardCryptoError.authentication("This OMEMO message was already used or is too old.")
-            }
+        // Check cached keys first, regardless of the current chain, so messages that arrive out of
+        // order across a DH ratchet step still decrypt.
+        if let index = skipped.firstIndex(where: {
+            $0.dhPublic == header.dhPublic && $0.messageNumber == header.messageNumber
+        }) {
             let skippedKey = skipped.remove(at: index)
             return try decryptWithKey(authenticated, header: header, messageKey: skippedKey.messageKey,
                                       associatedData: associatedData)
         }
 
-        if remotePublic != header.dhPublic {
+        if remotePublic == header.dhPublic {
+            guard header.messageNumber >= receiveCount else {
+                throw WardCryptoError.authentication("This OMEMO message was already used or is too old.")
+            }
+        } else {
             if let remotePublic {
                 try skipReceivingKeys(until: header.previousChainLength, dhPublic: remotePublic)
             }

@@ -182,6 +182,10 @@ extension XMPPSession {
 
     func forgetDevice(jid: String, deviceId: Int64, protocolName: String) async {
         try? await database.deleteDevice(accountId: accountId, jid: jid, deviceId: deviceId, protocolName: protocolName)
+        if protocolName == "omemo2" {
+            omemo?.forgetSession(jid: JID.bare(jid), deviceId: UInt32(truncatingIfNeeded: deviceId))
+            omemoBundleCache.removeValue(forKey: JID.bare(jid))
+        }
         onDevicesChanged?(jid)
     }
 

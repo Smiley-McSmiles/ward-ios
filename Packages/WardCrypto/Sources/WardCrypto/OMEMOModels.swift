@@ -40,7 +40,9 @@ public struct OMEMOIdentity: Codable, Equatable {
     }
 
     public mutating func replenishPreKeys() throws {
-        var next = (preKeys.map(\.id).max() ?? 0) + 1
+        // Include consumed keys so a replenished id can never collide with one a peer may still use.
+        let highest = (preKeys.map(\.id) + usedPreKeys.map(\.id)).max() ?? 0
+        var next = highest + 1
         while preKeys.count < 100 {
             let pair = try CryptoPrimitives.x25519KeyPair()
             preKeys.append(OMEMOPreKey(id: next, publicKey: pair.publicKey, secretKey: pair.secretKey))
